@@ -2384,7 +2384,11 @@ document.addEventListener("DOMContentLoaded", init);
       });
       let data;
       try{ data=await r.json(); }catch(e){ throw new Error("เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (อาจยังไม่ได้ deploy backend)"); }
-      if(!r.ok){ throw new Error(data.error||("HTTP "+r.status)); }
+      if(!r.ok){
+        let em = data && data.error;
+        if(em && typeof em === "object") em = em.message || em.code || JSON.stringify(em);
+        throw new Error(em || ("HTTP "+r.status));
+      }
       if(!data.image){ throw new Error("ไม่ได้รับภาพกลับมา"); }
       setProg(100,"เสร็จแล้ว ✓");
       setTimeout(()=>{ $g("imgProgressWrap").style.display="none"; },500);
