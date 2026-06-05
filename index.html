@@ -624,7 +624,7 @@ textarea.prompt:focus{outline:none}
 
     <div class="card" style="margin-top:16px">
       <h3>🖼️ สร้างภาพด้วย AI (OpenAI)</h3>
-      <div class="note tip">ℹ️ ภาพจาก API จะ<strong>ไม่มีตัวอักษรใด ๆ บนภาพ</strong> (กันฟอนต์ไทยเพี้ยน) — ระบบให้ GPT ช่วยเกลาคำสั่งก่อนวาดเพื่อคุณภาพที่ดีขึ้น ถ้าต้องการบอร์ดนำเสนอครบพร้อมตัวอักษร แนะนำคัดลอกคำสั่งไปใช้ใน ChatGPT</div>
+      <div class="note tip">ℹ️ ภาพจาก API จะ<strong>ไม่มีตัวอักษรใด ๆ บนภาพ</strong> (กันฟอนต์ไทยเพี้ยน) และปรับสูตรให้ภาพ 3D เดี่ยวสวยระดับภาพถ่ายมืออาชีพแล้ว — <strong>ถ้าต้องการบอร์ดนำเสนอครบชุด</strong> (3D+แปลน+รูปด้าน+material board) ให้เลือกประเภทแบบ "Presentation Board" → กดสร้างคำสั่ง → คัดลอกไปวางใน ChatGPT (ได้ผลสวยกว่า API มาก)</div>
       <div class="note tip" id="aiSetupNote" style="display:none">
         ⚙️ ยังไม่ได้ตั้งค่าที่อยู่ backend — ระบบจะลองเรียก <code>/api/generate-image</code> ของโดเมนนี้โดยอัตโนมัติ
         (ใช้ได้เมื่อ deploy ขึ้น Vercel แล้ว) ถ้าทดสอบในเครื่องให้กรอก URL backend ด้านล่าง
@@ -958,16 +958,23 @@ function buildImagePrompt(){
   const isPlan=/แปลน|Plan|ผัง/i.test(drawing);
   const isElevation=/รูปด้าน|Elevation/i.test(drawing);
 
-  let view;
-  if(isPlan) view="architectural top-view floor plan, clean line drawing, furniture layout, no text";
-  else if(isElevation) view="architectural front elevation drawing, orthographic, clean lines";
-  else if(isInterior) view="interior design photograph, wide angle, natural light";
-  else view="exterior architectural visualization, 3/4 angle, eye-level, professional real-estate photography";
+  let view, lens;
+  if(isPlan){ view="architectural top-down floor plan, clean CAD-style line drawing, clear room divisions, furniture layout, color-coded zones"; lens=""; }
+  else if(isElevation){ view="architectural front elevation, orthographic projection, clean precise lines, accurate proportions"; lens=""; }
+  else if(isInterior){ view="interior architectural photography, wide-angle, styled furniture, warm natural daylight from windows"; lens="shot on 24mm lens, f/8"; }
+  else { view="exterior architectural photography, dramatic 3/4 hero angle, eye-level, full building in frame"; lens="shot on 16-35mm wide-angle lens, f/8, tripod"; }
 
-  let p = `Photorealistic ${view} of a ${floors}-storey ${bt}, ${style} architectural style. `;
-  p += `Exterior walls in ${wall}, ${roof} with ${roofMat}. Color palette: ${tone}. `;
-  p += `Approx ${area} sqm. Lighting/mood: ${atmos}. `;
-  p += `Highly detailed, realistic materials, professional composition, soft global illumination, 8k, sharp focus. `;
+  let p = `Award-winning ${view} of a ${floors}-storey ${bt}, ${style} architectural style. `;
+  p += `Exterior walls in ${wall}, ${roof} with ${roofMat}. Color palette: ${tone}. Approx ${area} sqm. `;
+  p += `Lighting and mood: ${atmos}. `;
+  if(!isPlan && !isElevation){
+    // เติมรายละเอียดเชิงภาพถ่ายมืออาชีพ ให้ภาพสวยขึ้นมาก
+    p += `Professional real-estate / architectural magazine quality, ${lens}. `;
+    p += `Beautiful landscaping in foreground (manicured garden, walkway, ornamental plants), realistic sky with soft clouds, warm interior lights glowing through windows, subtle reflections, depth of field. `;
+    p += `Ultra-detailed PBR materials, physically-based global illumination, ambient occlusion, ray-traced soft shadows, crisp sharp focus, photorealistic, hyper-realistic, 8k UHD, cinematic color grading. `;
+  } else {
+    p += `Crisp, accurate, high-resolution, clean white background. `;
+  }
   // กฎเหล็ก: ห้ามมีตัวอักษรใด ๆ ในภาพ
   p += `STRICT: absolutely NO text, NO letters, NO Thai characters, NO labels, NO captions, NO watermark, NO dimension numbers, NO title block, NO signage anywhere in the image. Pure visual only.`;
   return p;
@@ -1424,11 +1431,12 @@ function populateSelect(id, items, defaultIndex = 0){
 function generateRandomSeed(){ return Math.floor(1000000 + Math.random()*9000000).toString(); }
 
 function toast(msg, type = "success"){
+  let wrap = document.querySelector(".toast-wrap");
+  if(!wrap){ wrap = document.createElement("div"); wrap.className = "toast-wrap"; document.body.appendChild(wrap); }
   const d = document.createElement("div");
-  d.className = "toast";
-  d.style.background = type === "error" ? "var(--danger)" : (type === "info" ? "var(--blue)" : "var(--accent)");
+  d.className = "toast" + (type === "error" ? " error" : (type === "info" ? " info" : ""));
   d.textContent = msg;
-  document.body.appendChild(d);
+  wrap.appendChild(d);
   setTimeout(() => d.remove(), 3000);
 }
 async function copyToClipboard(text){
@@ -1738,16 +1746,26 @@ function getCeilingLightingDetails(){
 function getPresentationBoardInstruction(t){
   if(!t.includes("Presentation Board")) return "";
   const fp = getFloorPlansList().replace(/\n/g, " | ").replace(/ \| $/, "");
-  return block("📋 PRESENTATION BOARD", [
-    `PROJECT: ${val("txtProject")}`,
-    `STYLE: ${val("cbStyle")} | FLOORS: ${getFloorNum()}`,
-    "LAYOUT:",
-    "- MAIN 3D EXTERIOR RENDER (Hero Image)",
-    "- PROJECT TITLE BLOCK",
-    `- FLOOR PLANS: ${fp}`,
-    "- 4 ELEVATIONS (2D): N, S, E, W",
-    "- 4 INTERIOR RENDERS (3D): Living, Bedroom, Kitchen, Bathroom",
-    `- ${checked("showMaterialBoard") ? "MATERIAL BOARD" : "LANDSCAPE"}`
+  const bt = enOf(val("cbBuildingType"));
+  const style = enOf(val("cbStyle"));
+  const wall = enOf(val("cbWallMaterial"));
+  const roofMat = enOf(val("cbRoofMaterial"));
+  const tone = enOf(val("cbExtTone"));
+  const atmos = enOf(val("cbAtmosphere"));
+  return block("📋 PRESENTATION BOARD — สั่ง ChatGPT ทำบอร์ดนำเสนอครบชุด (ภาพเดียว)", [
+    "TASK: Generate ONE single professional architectural PRESENTATION BOARD image (landscape A1-style layout), studio-quality, like a real architect's presentation sheet. Compose all of the following into one cohesive board:",
+    "",
+    "TOP-LEFT (largest, hero): a photorealistic 3D EXTERIOR perspective render —",
+    `  ${bt}, ${style} style, ${getFloorNum()}-storey, walls ${wall}, roof ${roofMat}, palette ${tone}, ${atmos}, beautiful landscaping, cars in driveway, warm window lights, magazine quality.`,
+    "TOP-RIGHT: a MATERIAL BOARD — neat grid of labelled material/finish swatches (wall, roof, floor, window, countertop, etc.).",
+    `MIDDLE band: FLOOR PLANS — ${fp} — clean architectural plans with furniture layout and room labels.`,
+    "LOWER band: 4 ELEVATIONS (Front, Rear, Left, Right) as clean 2D drawings in a row, with a small SITE PLAN + north arrow.",
+    "BOTTOM strip: 3-4 INTERIOR 3D renders (living room, bedroom, kitchen, bathroom).",
+    "BOTTOM-RIGHT: a clean PROJECT TITLE BLOCK (project name, drawing title, sheet no., scale, date).",
+    "",
+    "STYLE: cohesive neutral background, thin separator lines between zones, professional architectural sheet aesthetic, balanced composition, high resolution.",
+    "TEXT RULE: labels must be in clear correct ENGLISH only (no Thai text, since image models render Thai incorrectly). Keep labels short and legible.",
+    "IMPORTANT: produce it as ONE combined board image."
   ]);
 }
 function getBOQSection(){
