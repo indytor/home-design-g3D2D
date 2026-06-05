@@ -624,6 +624,7 @@ textarea.prompt:focus{outline:none}
 
     <div class="card" style="margin-top:16px">
       <h3>🖼️ สร้างภาพด้วย AI (OpenAI)</h3>
+      <div class="note tip">ℹ️ ภาพจาก API จะ<strong>ไม่มีตัวอักษรใด ๆ บนภาพ</strong> (กันฟอนต์ไทยเพี้ยน) — ระบบให้ GPT ช่วยเกลาคำสั่งก่อนวาดเพื่อคุณภาพที่ดีขึ้น ถ้าต้องการบอร์ดนำเสนอครบพร้อมตัวอักษร แนะนำคัดลอกคำสั่งไปใช้ใน ChatGPT</div>
       <div class="note tip" id="aiSetupNote" style="display:none">
         ⚙️ ยังไม่ได้ตั้งค่าที่อยู่ backend — ระบบจะลองเรียก <code>/api/generate-image</code> ของโดเมนนี้โดยอัตโนมัติ
         (ใช้ได้เมื่อ deploy ขึ้น Vercel แล้ว) ถ้าทดสอบในเครื่องให้กรอก URL backend ด้านล่าง
@@ -916,9 +917,61 @@ const EN = {
   "คอนกรีตขัดมัน":"Polished concrete","กระเบื้องพอร์ซเลน":"Porcelain tile","หินอ่อน":"Marble","หินแกรนิต":"Granite","พื้นไม้สัก":"Teak wood floor","พื้นทรายล้าง":"Exposed aggregate floor","ไม้เทียมลายไม้":"Wood-look composite","ไม้เทียม":"Composite wood",
   "เมทัลชีท":"Metal sheet roof","พื้นคอนกรีต":"Concrete slab roof","กระเบื้องซีแพค":"CPAC concrete roof tile","กระเบื้องดินเผาทรงไทย":"Thai-style terracotta roof tile","กระเบื้องเกล็ดเต่า":"Fish-scale roof tile",
   // บรรยากาศ
-  "แสงแดดส่องตรง":"Direct sunlight","แสงทองยามเย็น":"Golden hour light","แสงสนธยา":"Twilight","แสงธรรมชาติอ่อนนุ่ม":"Soft natural light","บรรยากาศฝนตก":"Rainy atmosphere","แสงไฟยามค่ำคืน":"Night lighting","บรรยากาศหมอกยามเช้า":"Morning mist","แสงรำไรผ่านต้นไม้":"Dappled light through trees"
+  "แสงแดดส่องตรง":"Direct sunlight","แสงทองยามเย็น":"Golden hour light","แสงสนธยา":"Twilight","แสงธรรมชาติอ่อนนุ่ม":"Soft natural light","บรรยากาศฝนตก":"Rainy atmosphere","แสงไฟยามค่ำคืน":"Night lighting","บรรยากาศหมอกยามเช้า":"Morning mist","แสงรำไรผ่านต้นไม้":"Dappled light through trees",
+  // โทนสีภายนอก (exterior color palettes)
+  "สว่าง: ขาว ไม้สีอ่อน เทา กระจก":"bright palette: white, light wood, grey, glass",
+  "สว่าง: ครีม น้ำตาลอ่อน ขาวเทา":"bright palette: cream, light brown, off-white grey",
+  "เข้ม: เทาดำ ไม้เข้ม ดำด้าน":"dark palette: charcoal grey, dark wood, matte black",
+  "เข้ม: สีเอิร์ธโทน หินเทา น้ำตาลเข้ม":"dark earth palette: stone grey, deep brown",
+  "กลาง: เทาอ่อน ขาว ไม้ระแนง":"neutral palette: light grey, white, wood battens",
+  "โมเดิร์น: เทาอ่อน เทาเข้ม ดำ":"modern palette: light grey, dark grey, black",
+  "มินิมอล: ขาว ไม้ซีด ดำ":"minimalist palette: white, pale wood, black",
+  "โทนดิน: ครีม น้ำตาลอ่อน":"earth tone palette: cream, light brown",
+  "หรูหรา: ขาว หินอ่อนสีเทา ทอง":"luxury palette: white, grey marble, gold accents",
+  "นอร์ดิก: ขาว ไม้ซีด เทา":"nordic palette: white, pale wood, grey",
+  "อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ":"industrial palette: matte black, raw steel, dark patina",
+  "ไทย: น้ำตาลไม้สัก ทองแดง เขียวใบไม้":"thai palette: teak brown, copper, foliage green"
 };
 function bili(thai){ const t=(thai||"").trim(); const e=EN[t]; return e ? `${t} (${e})` : t; }
+/* คืนคำอังกฤษล้วน (ตัดไทยออก) สำหรับ prompt สร้างภาพ ป้องกันตัวอักษรไทยโผล่ในภาพ */
+function enOf(thai){
+  const t=(thai||"").trim();
+  if(EN[t]) return EN[t];
+  // ดึงอังกฤษในวงเล็บถ้ามี เช่น "โมเดิร์น (Modern)" -> "Modern"
+  const m=t.match(/\(([^)]+)\)/);
+  if(m) return m[1].trim();
+  return t; // ไม่มีคำแปล คืนค่าเดิม (อาจเป็นไทย แต่จะไม่ใส่เป็นข้อความในภาพอยู่แล้ว)
+}
+/* สร้าง prompt ภาษาอังกฤษล้วนสำหรับโมเดลสร้างภาพ (ต่างจาก txtPrompt ที่มีไทย/ตารางชื่อ) */
+function buildImagePrompt(){
+  const bt=enOf(val("cbBuildingType"));
+  const style=enOf(val("cbStyle"));
+  const roof=enOf(val("cbRoofStyle"));
+  const wall=enOf(val("cbWallMaterial"));
+  const roofMat=enOf(val("cbRoofMaterial"));
+  const tone=enOf(val("cbExtTone"));
+  const atmos=enOf(val("cbAtmosphere"));
+  const floors=val("cbFloors")==="ชั้นครึ่ง"?"1.5":val("cbFloors");
+  const area=val("txtArea");
+  const drawing=val("cbType")||"";
+  const isInterior=/ภายใน|Interior/i.test(drawing);
+  const isPlan=/แปลน|Plan|ผัง/i.test(drawing);
+  const isElevation=/รูปด้าน|Elevation/i.test(drawing);
+
+  let view;
+  if(isPlan) view="architectural top-view floor plan, clean line drawing, furniture layout, no text";
+  else if(isElevation) view="architectural front elevation drawing, orthographic, clean lines";
+  else if(isInterior) view="interior design photograph, wide angle, natural light";
+  else view="exterior architectural visualization, 3/4 angle, eye-level, professional real-estate photography";
+
+  let p = `Photorealistic ${view} of a ${floors}-storey ${bt}, ${style} architectural style. `;
+  p += `Exterior walls in ${wall}, ${roof} with ${roofMat}. Color palette: ${tone}. `;
+  p += `Approx ${area} sqm. Lighting/mood: ${atmos}. `;
+  p += `Highly detailed, realistic materials, professional composition, soft global illumination, 8k, sharp focus. `;
+  // กฎเหล็ก: ห้ามมีตัวอักษรใด ๆ ในภาพ
+  p += `STRICT: absolutely NO text, NO letters, NO Thai characters, NO labels, NO captions, NO watermark, NO dimension numbers, NO title block, NO signage anywhere in the image. Pure visual only.`;
+  return p;
+}
 
 /* หมวดอาคาร → ใช้กำหนดค่าตั้งต้นของแท็บไฟ/ประปา/สุขภัณฑ์/ฝ้า/ภูมิทัศน์ */
 const buildingCategory = {
@@ -2312,8 +2365,10 @@ document.addEventListener("DOMContentLoaded", init);
     }));
   }
   async function generateImage(){
-    const prompt=(val("txtPrompt")||"").trim();
-    if(prompt.length<10){ toast("ยังไม่มีคำสั่ง กด 'สร้างคำสั่ง' ก่อน","error"); return; }
+    // สร้าง prompt สดทุกครั้งจากข้อมูลฟอร์มล่าสุด (กันใช้ค่าเก่าเมื่อเปลี่ยนอาคาร) + เป็นอังกฤษล้วน ห้ามมีตัวอักษรในภาพ
+    let prompt;
+    try{ prompt = buildImagePrompt(); }catch(e){ prompt = (val("txtPrompt")||"").trim(); }
+    if(!prompt || prompt.length<10){ toast("ยังไม่มีข้อมูลพอจะสร้างภาพ","error"); return; }
     const base=(val("txtApiBase")||"").trim().replace(/\/+$/,"");
     const url=(base||"")+"/api/generate-image";
     const size=val("cbImgSize")||"1024x1024";
@@ -2324,7 +2379,7 @@ document.addEventListener("DOMContentLoaded", init);
       const r=await fetch(url,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({prompt,size,quality}),
+        body:JSON.stringify({prompt,size,quality,refine:true}),
         signal:imgAbort.signal
       });
       let data;
