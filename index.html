@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Architectural Prompt Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f7; --surface:#ffffff; --surface-2:#f7f9fc; --ink:#1e2733; --ink-soft:#5b6675;
+  --line:#e3e8f0; --line-2:#eef1f6;
+  --accent:#4f46e5; --accent-d:#3730a3; --accent-soft:#eef0fe;
+  --teal:#0d9488; --teal-soft:#e6f6f4;
+  --amber:#d97706; --amber-soft:#fef3e2;
+  --gold:#b8860b; --gold-soft:#fbf3da;
+  --red:#dc2626; --red-soft:#fde8e8;
+  --blue:#2563eb; --blue-soft:#e8f0fe;
+  --green:#059669; --green-soft:#e7f6ef;
+  --purple:#7c3aed; --purple-soft:#f1e9fe;
+  --cyan:#0891b2; --cyan-soft:#e2f5fb;
+  --radius:16px; --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -12px rgba(16,24,40,.12);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Sarabun','Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  line-height:1.5;-webkit-font-smoothing:antialiased;font-size:15px}
+.app{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* topbar */
+.topbar{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.logo{flex:none;width:50px;height:50px}
+.topbar h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+.topbar .sub{margin-top:2px;font-size:12.5px;color:var(--ink-soft)}
+.topbar .spacer{flex:1}
+.pill{font-size:11px;font-weight:600;color:var(--accent-d);background:var(--accent-soft);
+  padding:5px 11px;border-radius:999px;border:1px solid #dcdffb}
+
+/* mode bar (primary nav) */
+.modebar{display:flex;gap:8px;margin:18px 0 0;flex-wrap:wrap}
+.mode-btn{flex:1;min-width:140px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);
+  padding:13px 16px;border-radius:13px;font-size:14.5px;font-weight:600;cursor:pointer;
+  transition:.15s;box-shadow:var(--shadow-sm);font-family:inherit}
+.mode-btn:hover{border-color:#c9cffa;color:var(--ink)}
+.mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;
+  box-shadow:0 8px 20px -8px var(--accent)}
+
+/* mode panes */
+.mode{display:none;margin-top:18px;animation:rise .25s ease}
+.mode.active{display:block}
+.mode-pane{display:block;margin-bottom:16px}
+
+/* sub-tabs (design only) */
+.subtabs{display:flex;gap:7px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
+  border-radius:13px;padding:8px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+.tab-btn{background:transparent;border:1px solid transparent;color:var(--ink-soft);
+  padding:9px 14px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.tab-btn:hover{background:var(--surface-2);color:var(--ink)}
+.tab-btn.active{background:var(--accent-soft);color:var(--accent-d);border-color:#dcdffb}
+.tab-pane{display:none;animation:rise .25s ease}
+.tab-pane.active{display:block}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+.card h3{margin:0 0 14px;font-size:15.5px;font-weight:700;color:var(--ink);
+  padding-bottom:10px;border-bottom:1px solid var(--line-2)}
+.card h4{margin:14px 0 8px;font-size:13.5px;font-weight:700;color:var(--accent-d)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+
+/* fields */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);
+  border-radius:10px;font-size:14px;background:var(--surface);color:var(--ink);font-family:inherit;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:560px){.row-2,.row-3{grid-template-columns:1fr}}
+
+/* notes */
+.note{font-size:12.5px;padding:11px 14px;border-radius:11px;margin:10px 0;line-height:1.6}
+.note.tip{background:var(--accent-soft);color:var(--accent-d);border:1px solid #dcdffb}
+.note.ok{background:var(--green-soft);color:#065f46;border:1px solid #b8e6cf}
+.note.warn{background:var(--amber-soft);color:#92400e;border:1px solid #f5d59a}
+.note code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:5px;font-size:12px}
+
+/* checks / opt rows / selector / radio */
+.checks,.opt-row{display:flex;flex-wrap:wrap;gap:9px 16px;align-items:center}
+.checks label,.opt-row label{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer}
+.opt-row{margin:10px 0}
+.opt-row strong{font-size:13px;color:var(--ink)}
+.selector,.radio-bar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0}
+.selector strong,.radio-bar strong{font-size:13px;color:var(--accent-d)}
+.selector label,.radio-bar label{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+
+/* flow steps (help/main) */
+.flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:6px 0}
+.flow .step{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+  padding:7px 13px;border-radius:9px;font-size:12.5px;font-weight:600}
+.flow .arr{color:var(--accent);font-weight:700}
+
+/* display tab */
+.qbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.disp-card{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.ro{background:var(--line-2) !important;font-weight:600;color:var(--ink)}
+.stilt-preview{background:#fdf2f8;border:1px solid #f6cbe0;border-radius:12px;padding:14px;margin-top:14px}
+.stilt-preview h4{color:#be185d}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  padding:4px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+.badge.blue{background:var(--blue-soft);color:var(--blue);border-color:#c7dbfd}
+.badge.purple{background:var(--purple-soft);color:var(--purple);border-color:#ddccfb}
+.badge.green{background:var(--green-soft);color:var(--green);border-color:#b8e6cf}
+.badge.red{background:var(--red-soft);color:var(--red);border-color:#f5c2c2}
+.badge.gold{background:var(--gold-soft);color:var(--gold);border-color:#ecd9a3}
+.badge.cyan{background:var(--cyan-soft);color:var(--cyan);border-color:#bce6f1}
+.badge.photo{background:var(--accent-soft);color:var(--accent-d);border-color:#dcdffb}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 18px;border-radius:11px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;box-shadow:var(--shadow-sm)}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn:active{transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.warn{background:var(--amber);border-color:var(--amber);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:var(--surface);color:var(--ink-soft)}
+.btn-group{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+
+/* output */
+.out{margin-top:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+.out-head{background:var(--surface-2);color:var(--ink);padding:13px 16px;display:flex;
+  align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line)}
+.badges{display:flex;flex-wrap:wrap;gap:7px}
+textarea.prompt{width:100%;min-height:440px;padding:16px;background:#0f172a;color:#cbd5e1;
+  border:none;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;resize:vertical}
+textarea.prompt:focus{outline:none}
+
+/* generator layout */
+.gen-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+@media(max-width:900px){.gen-wrap{grid-template-columns:1fr}}
+
+/* price table */
+#priceTable th{font-size:12px;color:var(--ink-soft);font-weight:600;border-bottom:1px solid var(--line)}
+#priceTable td{color:var(--ink)}
+
+/* toast */
+.toast-wrap{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#111827;color:#fff;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:500;
+  box-shadow:0 12px 30px -8px rgba(0,0,0,.4);animation:rise .2s ease}
+.toast.error{background:var(--red)}
+.toast.info{background:var(--accent)}
+
+@media(max-width:560px){
+  .app{padding:14px 12px 50px}
+  .mode-btn{min-width:0;flex:1 1 45%}
+}
+</style>
+<body>
+<div class="app">
+  <header class="topbar">
+    <svg class="logo" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <rect x="1" y="1" width="46" height="46" rx="13" fill="url(#g1)"/>
+  <path d="M13 27 L24 16 L35 27" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16 25 V34 H32 V25" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 34 V29 H26 V34" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs><linearGradient id="g1" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#6366f1"/><stop offset="1" stop-color="#0d9488"/></linearGradient></defs>
+</svg>
+    <div>
+      <h1>AI Architectural Prompt Generator</h1>
+      <div class="sub">กรอกข้อมูลภาษาไทย → ได้คำสั่งภาษาอังกฤษสำหรับ AI สร้างภาพ</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill">เวอร์ชันใหม่</span>
+  </header>
+
+  <nav class="modebar">
+    <button class="mode-btn active" data-mode="design">🎨 ออกแบบ / สร้างภาพ</button>
+    <button class="mode-btn" data-mode="boq">📊 ประมาณราคา BOQ</button>
+    <button class="mode-btn" data-mode="save">💾 บันทึกงาน</button>
+    <button class="mode-btn" data-mode="help">📖 วิธีใช้</button>
+  </nav>
+
+  <!-- ===== MODE: DESIGN ===== -->
+  <section id="mode-design" class="mode active">
+    <nav class="subtabs">
+      <button class="tab-btn active" data-tab="main">🏠 ข้อมูลทั่วไป</button>
+      <button class="tab-btn" data-tab="architectural">🏛️ สถาปัตยกรรม</button>
+      <button class="tab-btn" data-tab="interior">🛋️ ภายใน</button>
+      <button class="tab-btn" data-tab="lighting">💡 ฝ้า/ไฟ</button>
+      <button class="tab-btn" data-tab="landscape">🌳 ภูมิทัศน์</button>
+      <button class="tab-btn" data-tab="material">🎨 วัสดุ</button>
+      <button class="tab-btn" data-tab="display">👁️ แสดงผล</button>
+    </nav>
+    <div id="tab-main" class="tab-pane active">
+    <div class="note tip">🌐 <strong>วิธีใช้:</strong> กรอกข้อมูลเป็นภาษาไทย ระบบจะแปลงเป็นคำสั่งภาษาอังกฤษให้ AI อัตโนมัติ แล้วกด <strong>“สร้างคำสั่ง”</strong> ด้านล่าง</div>
+    <div class="flow">
+      <span class="step">🎯 1. 3D Model</span><span class="arr">→</span>
+      <span class="step">🗺️ 2. Top View</span><span class="arr">→</span>
+      <span class="step">🧭 3. รูปด้าน</span><span class="arr">→</span>
+      <span class="step">✂️ 4. รูปตัด</span><span class="arr">→</span>
+      <span class="step">📐 5. แปลน 2D</span><span class="arr">→</span>
+      <span class="step">📋 6. Presentation</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>📋 ข้อมูลโครงการ</h3>
+        <div class="field"><label>ประเภทอาคาร</label><select id="cbBuildingType"></select></div>
+        <div class="field"><label>ชื่อโครงการ</label><input type="text" id="txtProject" value="บ้านพักอาศัย"></div>
+        <div class="row-2">
+          <div class="field"><label>เจ้าของบ้าน</label><input type="text" id="txtOwner" value="" placeholder="(เว้นว่างได้)"></div>
+          <div class="field"><label>ผู้ออกแบบ</label><input type="text" id="txtDesigner" value="" placeholder="(เว้นว่างได้)"></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>วิศวกร</label><input type="text" id="txtEngineer" value="" placeholder="(เว้นว่างได้)"></div>
+          <div class="field"><label>สถาปนิก</label><input type="text" id="txtArchitect" value="" placeholder="(เว้นว่างได้)"></div>
+        </div>
+        <div class="field"><label>หมายเหตุเพิ่มเติม</label><textarea id="txtNotes" rows="3">เน้นแสดงถึงธรรมชาติและวัสดุที่ใช้หมุนเวียนได้ เน้นการระบายอากาศที่ดี</textarea></div>
+      </div>
+      <div class="card">
+        <h3>🎨 สไตล์และบรรยากาศ</h3>
+        <div class="field"><label>รูปแบบสถาปัตยกรรม</label><select id="cbStyle"></select></div>
+        <div class="field"><label>รูปแบบหลังคา</label><select id="cbRoofStyle"></select></div>
+        <div class="field"><label>โทนสีภายนอก</label><select id="cbExtTone"></select></div>
+        <div class="field"><label>โทนสีภายใน</label><select id="cbIntTone"></select></div>
+        <div class="field"><label>บรรยากาศภาพ</label><select id="cbAtmosphere"></select></div>
+      </div>
+      <div class="card">
+        <h3>📐 ขนาดและพื้นที่ใช้สอย</h3>
+        <div class="row-2">
+          <div class="field"><label>จำนวนชั้น</label><select id="cbFloors"></select></div>
+          <div class="field"><label>พื้นที่ใช้สอย (ตร.ม.)</label><input type="text" id="txtArea" value="150"></div>
+        </div>
+        <div class="row-3">
+          <div class="field"><label>ห้องนอน</label><select id="cbBedrooms"></select></div>
+          <div class="field"><label>ห้องน้ำ</label><select id="cbBathrooms"></select></div>
+          <div class="field"><label>ที่จอดรถ</label><select id="cbParking"></select></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>ห้องนอนหลัก</label><select id="cbMasterBedSize"></select></div>
+          <div class="field"><label>ห้องนอนรอง</label><select id="cbBedSize"></select></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>ห้องน้ำหลัก</label><select id="cbMasterBathSize"></select></div>
+          <div class="field"><label>ห้องน้ำรอง</label><select id="cbBathSize"></select></div>
+        </div>
+        <div class="field"><label>รายละเอียดการต่อเติม</label><select id="cbExtensionDetail"></select></div>
+        <div class="checks" style="margin-top:8px">
+          <label><input type="checkbox" id="chkStiltHouse"> 🏠 บ้านยกสูง / ใต้ถุน</label>
+        </div>
+      </div>
+    </div>
+  </div>
+    <div id="tab-architectural" class="tab-pane">
+    <div class="grid">
+      <div class="card">
+        <h3>🪵 วัสดุและโครงสร้าง (หลัก)</h3>
+        <div class="field"><label>🧱 ผนังภายนอก</label><select id="cbWallMaterial"></select></div>
+        <div class="field"><label>🪵 ผนังภายใน</label><select id="cbInteriorWallMaterial"></select></div>
+        <div class="field"><label>✨ ฝ้าเพดาน</label><select id="cbCeilingMaterial"></select></div>
+        <div class="field"><label>🪵 พื้น</label><select id="cbFloorMaterial"></select></div>
+        <div class="field"><label>🏠 วัสดุมุงหลังคา</label><select id="cbRoofMaterial"></select></div>
+        <div class="field"><label>📐 ความลาดเอียงหลังคา (องศา)</label><input type="text" id="txtRoofSlope" value="30"></div>
+        <div class="field"><label>🪨 พื้นห้องน้ำ</label><select id="cbBathFloorMaterial"></select></div>
+        <div class="field"><label>✨ ฝ้าห้องน้ำ</label><select id="cbBathCeilingMaterial"></select></div>
+        <div class="field"><label>🧱 ผนังห้องน้ำ</label><select id="cbBathWallMaterial"></select></div>
+        <div class="field"><label>🪵 พื้นห้องครัว</label><select id="cbKitchenFloorMaterial"></select></div>
+        <div class="field"><label>🧱 ผนังห้องครัว</label><select id="cbKitchenWallMaterial"></select></div>
+        <div class="field"><label>🪜 วัสดุบันได</label><select id="cbStairMaterial"></select></div>
+        <div class="row-3">
+          <div class="field"><label>กว้างบันได (ม.)</label><input type="text" id="txtStairWidth" value="1.20"></div>
+          <div class="field"><label>ลูกตั้ง (ม.)</label><input type="text" id="txtRiser" value="0.18"></div>
+          <div class="field"><label>ลูกนอน (ม.)</label><input type="text" id="txtTread" value="0.25"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🏗️ คาน · เสา · ฐานราก</h3>
+        <div class="field"><label>ขนาดเสา</label><input type="text" id="txtColSize" value="0.20x0.20 ม."></div>
+        <div class="field"><label>เหล็กหลักเสา</label><input type="text" id="txtColMain" value="4-DB12 มม."></div>
+        <div class="field"><label>เหล็กปลอกเสา</label><input type="text" id="txtColStirrup" value="RB6@0.15 ม."></div>
+        <div class="field"><label>ขนาดคานหลัก</label><input type="text" id="txtBeamSize" value="0.20x0.40 ม."></div>
+        <div class="field"><label>เหล็กเสริมคาน</label><input type="text" id="txtBeamMain" value="4-DB12 มม."></div>
+        <div class="field"><label>เหล็กปลอกคาน</label><input type="text" id="txtBeamStirrup" value="RB6@0.15 ม."></div>
+        <div class="field"><label>ขนาดฐานราก</label><input type="text" id="txtFootingSize" value="1.00x1.00x0.30 ม."></div>
+        <div class="field"><label>เหล็กเสริมฐานราก</label><input type="text" id="txtFootingRebar" value="DB12@0.15 ม."></div>
+        <div class="field"><label>เสาเข็ม</label><select id="cbPiling"></select></div>
+      </div>
+      <div class="card">
+        <h3>📄 งานอาคารตามแบบ (As-Built)</h3>
+        <div class="checks" style="margin-bottom:12px"><label><input type="checkbox" id="chkAsBuilt"> เปิดโหมดงานอาคารตามแบบ</label></div>
+        <div class="field"><label>รูปแบบการยึดถือ</label><select id="cbAsBuiltRigid"></select></div>
+        <div class="field"><label>บริบทโดยรอบ</label><select id="cbSiteContext"></select></div>
+        <div class="field"><label>การปรับปรุง</label><select id="cbAsBuiltFix"></select></div>
+        <div class="field"><label>หมายเหตุ As-Built</label><select id="cbAsBuiltNotes"></select></div>
+      </div>
+    </div>
+
+    <div id="stiltHouseSection" style="display:none;margin-top:18px">
+      <div class="card">
+        <h3>🏠 บ้านยกสูง / ใต้ถุน</h3>
+        <div class="field"><label>📏 ความสูงใต้ถุน</label>
+          <div class="row-2">
+            <input type="number" id="txtStiltHeight" value="1.20" step="0.05">
+            <select id="cbStiltHeightUnit"><option>เมตร</option><option>เซนติเมตร</option></select>
+          </div>
+        </div>
+        <div class="note ok" id="stairCalcBox">💡 ความสูง 1.20 ม. = 7 ขั้น</div>
+        <div class="row-2">
+          <div class="field"><label>🏗️ รูปแบบใต้ถุน</label><select id="cbUnderHouseType"><option>เปิดโล่งทั้งหมด</option><option>กึ่งโล่งกึ่งปิด</option><option>ปิดทึบ</option><option>ใช้เป็นที่จอดรถ</option></select></div>
+          <div class="field"><label>🧱 ผนัง/วัสดุปิดใต้ถุน</label><select id="cbUnderWallType"><option>ไม่มีผนัง</option><option>ผนังคอนกรีต</option><option>ผนังอิฐ</option><option>บล็อกโปร่ง/อิฐโปร่ง</option><option>ผนังไม้/ไม้ระแนง</option></select></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>🪜 ตำแหน่งบันได</label><select id="cbStairLocation"><option>ภายนอก</option><option>ภายใน</option></select></div>
+          <div class="field"><label>🪜 วัสดุบันได</label><select id="cbStairMaterialStilt"><option>คอนกรีต</option><option>เหล็ก</option><option>ไม้จริง</option><option>ไม้เทียม</option></select></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>💨 ระบายอากาศใต้ถุน</label><select id="cbUnderVentilation"><option>ระบายอากาศธรรมชาติ</option><option>ช่องระบายอากาศ</option><option>กรุตาข่ายกันสัตว์</option><option>ผนังโปร่ง/บล็อกโปร่ง</option><option>พัดลมดูดอากาศ</option></select></div>
+          <div class="field"><label>🎨 การตกแต่งใต้ถุน</label><select id="cbUnderFinish"><option>ปล่อยพื้นดินเดิม</option><option>ปูนฉาบ/คอนกรีต</option><option>กระเบื้อง</option><option>ทาสี</option><option>ปูไม้/ไม้เทียม</option></select></div>
+        </div>
+        <div class="checks"><label><input type="checkbox" id="chkRetainingWall"> มีกำแพงกันดิน/รั้วกันตก</label><label><input type="checkbox" id="chkUnderLighting"> มีไฟส่องสว่างใต้ถุน</label></div>
+        <div class="stilt-preview"><h4>📋 สรุปข้อมูลใต้ถุน</h4><div id="stiltPreviewContent">เลือกข้อมูลด้านบน</div></div>
+      </div>
+    </div>
+  </div>
+    <div id="tab-interior" class="tab-pane">
+    <div class="grid">
+      <div class="card">
+        <h3>🍳 ห้องครัว</h3>
+        <div class="field"><label>สไตล์ห้องครัว</label><select id="kitchenStyle"></select></div>
+        <div class="field"><label>รูปแบบครัว</label><select id="kitchenLayout"></select></div>
+        <div class="field"><label>วัสดุตู้ครัว</label><select id="kitchenCabinetMaterial"></select></div>
+        <div class="field"><label>สีตู้ครัว</label><select id="kitchenCabinetColor"></select></div>
+        <div class="field"><label>ท็อปเคาน์เตอร์</label><select id="kitchenCountertop"></select></div>
+        <div class="field"><label>วัสดุ backsplash</label><select id="kitchenBacksplash"></select></div>
+        <div class="checks"><label><input type="checkbox" id="kitchenIsland"> เกาะกลางครัว</label><label><input type="checkbox" id="kitchenOpen"> ครัวเปิด</label></div>
+      </div>
+      <div class="card">
+        <h3>🛏️ ห้องนอน</h3>
+        <div class="field"><label>สไตล์ห้องนอน</label><select id="bedroomStyle"></select></div>
+        <div class="field"><label>ประเภทห้องนอน</label><select id="bedroomType"></select></div>
+        <div class="field"><label>วัสดุพื้น</label><select id="bedroomFloor"></select></div>
+        <div class="field"><label>สีผนัง</label><select id="bedroomWallColor"></select></div>
+        <div class="field"><label>รูปแบบเตียง</label><select id="bedStyle"></select></div>
+        <div class="field"><label>ระบบจัดเก็บ</label><select id="bedroomStorage"></select></div>
+        <div class="checks"><label><input type="checkbox" id="bedroomWalkinCloset"> Walk-in Closet</label><label><input type="checkbox" id="bedroomEnsuite"> ห้องน้ำในตัว</label></div>
+      </div>
+      <div class="card">
+        <h3>🚽 ห้องน้ำ</h3>
+        <div class="field"><label>สไตล์ห้องน้ำ</label><select id="bathroomStyle"></select></div>
+        <div class="field"><label>ประเภทห้องน้ำ</label><select id="bathroomType"></select></div>
+        <div class="field"><label>วัสดุพื้น</label><select id="bathroomFloor"></select></div>
+        <div class="field"><label>วัสดุผนัง</label><select id="bathroomWall"></select></div>
+        <div class="field"><label>รูปแบบฝักบัว</label><select id="showerType"></select></div>
+        <div class="field"><label>สุขภัณฑ์</label><select id="bathroomSanitary"></select></div>
+        <div class="checks"><label><input type="checkbox" id="bathroomBathtub"> อ่างอาบน้ำ</label><label><input type="checkbox" id="bathroomBidet"> โถชำระ</label></div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card">
+        <h3>🛋️ ห้องนั่งเล่น</h3>
+        <div class="field"><label>สไตล์</label><select id="livingStyle"></select></div>
+        <div class="field"><label>วัสดุพื้น</label><select id="livingFloor"></select></div>
+        <div class="field"><label>สีผนัง</label><select id="livingWallColor"></select></div>
+        <div class="field"><label>รูปแบบโซฟา</label><select id="sofaStyle"></select></div>
+        <div class="field"><label>โต๊ะกลาง</label><select id="coffeeTable"></select></div>
+        <div class="checks"><label><input type="checkbox" id="livingFireplace"> เตาผิง</label><label><input type="checkbox" id="livingTvWall"> ผนังทีวี</label></div>
+      </div>
+      <div class="card">
+        <h3>💼 ห้องทำงาน</h3>
+        <div class="field"><label>สไตล์</label><select id="officeStyle"></select></div>
+        <div class="field"><label>วัสดุพื้น</label><select id="officeFloor"></select></div>
+        <div class="field"><label>สีผนัง</label><select id="officeWallColor"></select></div>
+        <div class="field"><label>โต๊ะทำงาน</label><select id="deskStyle"></select></div>
+        <div class="field"><label>ระบบจัดเก็บ</label><select id="officeStorage"></select></div>
+      </div>
+      <div class="card">
+        <h3>🏠 ห้องอื่น ๆ</h3>
+        <div class="field"><label>ห้องเด็ก</label><select id="kidsStyle"></select></div>
+        <div class="field"><label>ห้องซักล้าง</label><select id="laundryStyle"></select></div>
+        <div class="field"><label>ห้องเก็บของ</label><select id="storageStyle"></select></div>
+        <div class="field"><label>ห้องอเนกประสงค์</label><select id="multiPurposeStyle"></select></div>
+      </div>
+    </div>
+  </div>
+    <div id="tab-lighting" class="tab-pane">
+    <div class="grid">
+      <div class="card">
+        <h3>✨ ฝ้าเพดานทั่วไป</h3>
+        <div class="field"><label>ประเภทฝ้าเพดาน</label><select id="generalCeilingType"></select></div>
+        <div class="field"><label>ความสูงเพดาน (ม.)</label><input type="text" id="ceilingHeight" value="2.80"></div>
+        <div class="field"><label>ลวดลายฝ้า</label><select id="ceilingPattern"></select></div>
+        <div class="field"><label>สีฝ้าเพดาน</label><select id="ceilingColor"></select></div>
+        <div class="checks"><label><input type="checkbox" id="ceilingCove"> ฝ้าล้อมรอบ</label><label><input type="checkbox" id="ceilingDrop"> ฝ้าลดระดับ</label></div>
+      </div>
+      <div class="card">
+        <h3>💡 ระบบไฟทั่วไป</h3>
+        <div class="field"><label>ประเภทไฟหลัก</label><select id="mainLightType"></select></div>
+        <div class="field"><label>อุณหภูมิสี</label><select id="colorTemperature"></select></div>
+        <div class="field"><label>ความสว่าง</label><select id="lumens"></select></div>
+        <div class="field"><label>ระบบควบคุม</label><select id="lightingControl"></select></div>
+        <div class="checks"><label><input type="checkbox" id="lightingDimmer"> ปรับแสง</label><label><input type="checkbox" id="lightingSmart"> Smart Home</label></div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card"><h3>🍳 ไฟห้องครัว</h3>
+        <div class="field"><label>ไฟส่องงาน</label><select id="kitchenTaskLight"></select></div>
+        <div class="field"><label>ไฟตกแต่ง</label><select id="kitchenAccentLight"></select></div>
+        <div class="field"><label>ไฟใต้ตู้</label><select id="kitchenUnderCabinetLight"></select></div>
+        <div class="checks"><label><input type="checkbox" id="kitchenPendantLight"> โคมแขวนเกาะกลาง</label></div>
+      </div>
+      <div class="card"><h3>🛏️ ไฟห้องนอน</h3>
+        <div class="field"><label>ไฟอ่านหนังสือ</label><select id="bedroomReadingLight"></select></div>
+        <div class="field"><label>ไฟตกแต่ง</label><select id="bedroomAccentLight"></select></div>
+        <div class="field"><label>โคมระย้า</label><select id="bedroomChandelier"></select></div>
+        <div class="checks"><label><input type="checkbox" id="bedroomStripLight"> LED Strip</label></div>
+      </div>
+      <div class="card"><h3>🚽 ไฟห้องน้ำ</h3>
+        <div class="field"><label>ไฟหน้ากระจก</label><select id="bathroomVanityLight"></select></div>
+        <div class="field"><label>ไฟหลัก</label><select id="bathroomMainLight"></select></div>
+        <div class="checks"><label><input type="checkbox" id="bathroomWaterproof"> ไฟกันน้ำ</label></div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card"><h3>🛋️ ไฟห้องนั่งเล่น</h3>
+        <div class="field"><label>ไฟหลัก</label><select id="livingMainLight"></select></div>
+        <div class="field"><label>ไฟตกแต่งผนัง</label><select id="livingWallLight"></select></div>
+        <div class="field"><label>ไฟอ่านหนังสือ</label><select id="livingReadingLight"></select></div>
+        <div class="checks"><label><input type="checkbox" id="livingChandelier"> โคมระย้า</label></div>
+      </div>
+      <div class="card"><h3>💼 ไฟห้องทำงาน</h3>
+        <div class="field"><label>ไฟโต๊ะทำงาน</label><select id="officeDeskLight"></select></div>
+        <div class="field"><label>ไฟหลัก</label><select id="officeMainLight"></select></div>
+        <div class="field"><label>ไฟส่องเอกสาร</label><select id="officeTaskLight"></select></div>
+      </div>
+      <div class="card"><h3>🌳 ไฟภายนอก</h3>
+        <div class="field"><label>ไฟทางเดิน/สวน</label><select id="exteriorPathLight"></select></div>
+        <div class="field"><label>ไฟส่อง facade</label><select id="exteriorFacadeLight"></select></div>
+        <div class="field"><label>ไฟระเบียง</label><select id="exteriorBalconyLight"></select></div>
+        <div class="checks"><label><input type="checkbox" id="exteriorMotionSensor"> เซ็นเซอร์ตรวจจับ</label></div>
+      </div>
+    </div>
+  </div>
+    <div id="tab-landscape" class="tab-pane">
+    <div class="card">
+      <h3>🌳 ภูมิทัศน์และพื้นที่ภายนอก</h3>
+      <div class="note ok">💡 เลือกองค์ประกอบภายนอกอาคารเพื่อให้ AI สร้างภาพ 3D Render สมบูรณ์ยิ่งขึ้น</div>
+      <div class="grid">
+        <div class="field"><label>🌿 สวน/ภูมิทัศน์</label><select id="landscapeGarden"></select></div>
+        <div class="field"><label>🚶 ทางเดิน</label><select id="landscapeWalkway"></select></div>
+        <div class="field"><label>🌱 สนามหญ้า</label><select id="landscapeLawn"></select></div>
+        <div class="field"><label>💧 สระน้ำ/น้ำตก</label><select id="landscapeWater"></select></div>
+        <div class="field"><label>🪑 พื้นที่นั่งเล่นกลางแจ้ง</label><select id="landscapeSeating"></select></div>
+        <div class="field"><label>🎄 ของตกแต่งภายนอก</label><select id="landscapeDecor"></select></div>
+        <div class="field"><label>🪨 พื้นผิวภายนอก</label><select id="landscapeSurface"></select></div>
+      </div>
+      <div class="checks" style="margin-top:14px">
+        <label><input type="checkbox" id="landscapeFence"> รั้วรอบที่ดิน</label>
+        <label><input type="checkbox" id="landscapeGate"> ประตูรั้ว</label>
+        <label><input type="checkbox" id="landscapeCarport"> ที่จอดรถ/กันสาด</label>
+        <label><input type="checkbox" id="landscapeBbq"> พื้นที่ BBQ</label>
+        <label><input type="checkbox" id="landscapePlayground"> สนามเด็กเล่น</label>
+        <label><input type="checkbox" id="landscapePetArea"> พื้นที่สัตว์เลี้ยง</label>
+      </div>
+    </div>
+  </div>
+    <div id="tab-material" class="tab-pane">
+    <div class="card">
+      <h3>🎨 Material Board (ดึงข้อมูลอัตโนมัติ)</h3>
+      <div class="note ok">💡 วัสดุด้านล่างถูกดึงมาจากแท็บสถาปัตยกรรมโดยอัตโนมัติ</div>
+      <div class="grid">
+        <div class="field"><label>🧱 ผนังภายนอก</label><input type="text" id="syncExteriorWall" readonly class="ro"></div>
+        <div class="field"><label>🪵 ผนังภายใน</label><input type="text" id="syncInteriorWall" readonly class="ro"></div>
+        <div class="field"><label>🪵 พื้น</label><input type="text" id="syncFloor" readonly class="ro"></div>
+        <div class="field"><label>🏠 มุงหลังคา</label><input type="text" id="syncRoof" readonly class="ro"></div>
+        <div class="field"><label>🪟 กรอบหน้าต่าง/ประตู</label><input type="text" id="syncWindowFrame" readonly class="ro"></div>
+        <div class="field"><label>🎨 สีหลักภายนอก</label><input type="text" id="syncExteriorColor" readonly class="ro"></div>
+        <div class="field"><label>🎨 สีหลักภายใน</label><input type="text" id="syncInteriorColor" readonly class="ro"></div>
+        <div class="field"><label>🪨 เคาน์เตอร์ครัว</label><input type="text" id="syncCountertop" readonly class="ro"></div>
+        <div class="field"><label>🚽 วัสดุห้องน้ำ</label><input type="text" id="syncBathroom" readonly class="ro"></div>
+      </div>
+    </div>
+  </div>
+    <div id="tab-display" class="tab-pane">
+    <div class="card">
+      <h3>👁️ ตัวเลือกการแสดงผล</h3>
+      <div class="qbar">
+        <button id="btnSelectAllDisplay" class="btn blue">✅ เลือกทั้งหมด</button>
+        <button id="btnClearAllDisplay" class="btn ghost">❌ ไม่เลือกทั้งหมด</button>
+        <button id="btnDefaultDisplay" class="btn primary">🔄 ค่าเริ่มต้น</button>
+      </div>
+      <div class="disp-card"><h4>📐 ขนาดและมิติ</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="showDimensions" checked> แสดงขนาด</label>
+          <label><input type="checkbox" id="showRoomLabels" checked> ชื่อห้อง</label>
+          <label><input type="checkbox" id="showDoorSymbols" checked> สัญลักษณ์ประตู/หน้าต่าง</label>
+          <label><input type="checkbox" id="showStairArrows" checked> ลูกศรบันได</label>
+          <label><input type="checkbox" id="showNorthArrow" checked> ลูกศรทิศเหนือ</label>
+          <label><input type="checkbox" id="showScaleBar" checked> Scale Bar</label>
+        </div>
+      </div>
+      <div class="disp-card"><h4>🎨 วัสดุและพื้นผิว</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="showMaterialBoard" checked> Material Board</label>
+          <label><input type="checkbox" id="showMaterialSwatch" checked> ตัวอย่างวัสดุ</label>
+          <label><input type="checkbox" id="showMaterialLabels" checked> ป้ายชื่อวัสดุ</label>
+        </div>
+      </div>
+      <div class="disp-card"><h4>🪑 เฟอร์นิเจอร์</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="showFurniture" checked> เฟอร์นิเจอร์</label>
+          <label><input type="checkbox" id="showAppliances" checked> เครื่องใช้ไฟฟ้า</label>
+          <label><input type="checkbox" id="showPlants" checked> ต้นไม้/ของตกแต่ง</label>
+        </div>
+      </div>
+      <div class="disp-card"><h4>🌳 ภูมิทัศน์</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="showLandscape" checked> สวน/ต้นไม้</label>
+          <label><input type="checkbox" id="showWaterFeatures" checked> สระน้ำ/น้ำตก</label>
+          <label><input type="checkbox" id="showWalkways" checked> ทางเดิน</label>
+        </div>
+      </div>
+    </div>
+  </div>
+    <div class="gen-wrap">
+    <div class="card">
+      <h3>📐 ประเภทแบบที่ต้องการสร้าง</h3>
+      <div class="field"><select id="cbType" style="font-size:14px;padding:11px"></select></div>
+
+      <div class="note tip">
+        💡 <strong>ประเภทแบบ:</strong>
+        <span class="badge blue">2D แบบก่อสร้าง</span> แปลนพื้น/รูปด้าน/รูปตัด ·
+        <span class="badge purple">3D มุมมอง</span> 3D Render/Top View ·
+        <strong>แบบระบบ:</strong> ไฟฟ้า, สุขาภิบาล, ฝ้า, แบบขยาย
+      </div>
+
+      <div class="note ok" id="presentationLayoutHint" style="display:none">
+        <strong>📋 องค์ประกอบ Presentation Board:</strong> 3D Render ภายนอก (Hero) · แปลนพื้น 2D · รูปด้าน 2D · ภายใน 3D (นั่งเล่น/นอน/ครัว/น้ำ) · ภูมิทัศน์ · ข้อมูลโครงการ
+      </div>
+
+      <div class="radio-bar">
+        <strong>🎨 โหมดการสร้าง:</strong>
+        <label><input type="radio" name="imageMode" value="single" checked> 🖼️ ทีละ 1 ภาพ</label>
+        <label><input type="radio" name="imageMode" value="multi"> 🖼️🖼️ หลายภาพ</label>
+      </div>
+      <div id="multiImageWarning" class="note warn" style="display:none">⚠️ การสร้างหลายภาพอาจทำให้ไม่ตรงตามแบบเดิม</div>
+
+      <div class="opt-row">
+        <strong>✨ ระดับคุณภาพ:</strong>
+        <select id="cbRenderQuality" style="width:auto;min-width:200px">
+          <option value="ultra">🏆 Ultra Realistic</option>
+          <option value="high" selected>⭐ High Quality</option>
+          <option value="standard">📸 Standard</option>
+          <option value="draft">⚡ Draft</option>
+        </select>
+      </div>
+
+      <div class="selector">
+        <strong>🎨 รูปแบบการสร้างภาพ:</strong>
+        <label><input type="radio" name="renderStyle" value="photorealistic_3d" checked> 📸 3D เสมือนจริง</label>
+        <label><input type="radio" name="renderStyle" value="technical_3d"> 🔧 3D เทคนิค</label>
+        <label><input type="radio" name="renderStyle" value="color_2d"> 🎨 2D เรนเดอร์สี</label>
+        <label><input type="radio" name="renderStyle" value="technical_2d_bw"> ⚫ 2D เทคนิคขาวดำ</label>
+      </div>
+
+      <div class="row-3">
+        <div class="field"><label>เลขที่แผ่น</label><input type="text" id="txtSheetNo" value="01"></div>
+        <div class="field"><label>เลขที่แบบ</label><input type="text" id="txtDrgNo" value="A-01"></div>
+        <div class="field"><label>สเกล</label><select id="cbScale"></select></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>จำนวนชุด</label><select id="cbQty"></select></div>
+        <div class="field" style="display:flex;align-items:flex-end">
+          <div class="opt-row" style="margin:0;width:100%">
+            <label><input type="checkbox" id="chkWatermark"> 💧 ลายน้ำ</label>
+            <label><input type="checkbox" id="chkIncludeBOQ"> 📊 รวม BOQ</label>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>ข้อความลายน้ำ (เมื่อติ๊ก 💧 ลายน้ำ)</label><input type="text" id="txtWatermark" value="" placeholder="พิมพ์ข้อความลายน้ำที่ต้องการ เช่น ชื่อบริษัท/โลโก้"></div>
+
+      <div class="note ok" id="workflowHint">💡 แนะนำ: สร้าง 3D Render ภายนอกก่อน → แล้วสร้างรูปด้าน/แปลนพื้น 2D ตามลำดับ</div>
+      <div class="note tip" id="sheetCounter" style="margin-top:6px">📑 แผ่นที่ 1 / 1</div>
+
+      <div class="btn-group">
+        <button id="btnGenerate" class="btn primary">✨ สร้างคำสั่ง</button>
+        <button id="btnCopy" class="btn blue">📋 คัดลอก</button>
+        <button id="btnDownload" class="btn ghost">⬇️ ดาวน์โหลด .txt</button>
+        <button id="btnNextSheet" class="btn warn">⏩ แผ่นถัดไป</button>
+        <button id="btnQuickMode" class="btn gold">⚡ โหมดด่วน</button>
+        <button id="btnResetSeed" class="btn danger">🔄 รีเซ็ต Seed</button>
+      </div>
+    </div>
+
+    <div class="out">
+      <div class="out-head">
+        <span>🖖 คำสั่งสำหรับ AI</span>
+        <div class="badges">
+          <span class="badge">Seed: <span id="seedDisplay">--------</span></span>
+          <span class="badge green" id="modeBadge">🎨 1 ภาพ</span>
+          <span class="badge red">🇬🇧 English</span>
+          <span class="badge gold" id="qualityBadge">✨ High Quality</span>
+          <span class="badge cyan" id="continuityBadge">🔗 ต่อเนื่อง</span>
+          <span class="badge blue" id="typeBadge">📐 2D Drawing</span>
+          <span class="badge photo" id="styleBadge">📸 3D Photorealistic</span>
+        </div>
+      </div>
+      <textarea id="txtPrompt" class="prompt" readonly></textarea>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>🖼️ สร้างภาพด้วย AI (OpenAI)</h3>
+      <div class="note tip" id="aiSetupNote" style="display:none">
+        ⚙️ ยังไม่ได้ตั้งค่าที่อยู่ backend — ระบบจะลองเรียก <code>/api/generate-image</code> ของโดเมนนี้โดยอัตโนมัติ
+        (ใช้ได้เมื่อ deploy ขึ้น Vercel แล้ว) ถ้าทดสอบในเครื่องให้กรอก URL backend ด้านล่าง
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>ขนาดภาพ</label>
+          <select id="cbImgSize">
+            <option value="1024x1024">จัตุรัส 1024×1024</option>
+            <option value="1536x1024" selected>แนวนอน 1536×1024</option>
+            <option value="1024x1536">แนวตั้ง 1024×1536</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>คุณภาพ</label>
+          <select id="cbImgQuality">
+            <option value="high" selected>สูง (high)</option>
+            <option value="medium">กลาง (medium)</option>
+            <option value="low">ต่ำ/ประหยัด (low)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Backend URL (เว้นว่าง = ใช้ /api/generate-image ของเว็บนี้)</label>
+        <input type="text" id="txtApiBase" placeholder="เช่น https://your-app.vercel.app (เว้นว่างได้)">
+      </div>
+      <div class="btn-group">
+        <button id="btnGenImage" class="btn primary">🎨 สร้างภาพด้วย AI</button>
+        <button id="btnCancelImage" class="btn ghost" style="display:none">✖️ ยกเลิก</button>
+      </div>
+
+      <div id="imgProgressWrap" style="display:none;margin-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);margin-bottom:6px">
+          <span id="imgProgressLabel">กำลังส่งคำสั่ง...</span>
+          <span id="imgProgressTime">0.0 วิ</span>
+        </div>
+        <div style="height:10px;background:var(--line-2);border-radius:999px;overflow:hidden">
+          <div id="imgProgressBar" style="height:100%;width:8%;background:linear-gradient(90deg,var(--accent),var(--teal));border-radius:999px;transition:width .4s ease"></div>
+        </div>
+      </div>
+
+      <div id="imgError" class="note warn" style="display:none;margin-top:12px"></div>
+
+      <div id="imgResultWrap" style="display:none;margin-top:16px">
+        <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface-2)">
+          <img id="imgResult" alt="ผลงานที่ AI สร้าง" style="display:block;width:100%;height:auto">
+        </div>
+        <div class="btn-group">
+          <button id="btnDownloadImage" class="btn green">⬇️ ดาวน์โหลดภาพ</button>
+          <button id="btnGenImageAgain" class="btn ghost">🔁 สร้างใหม่อีกครั้ง</button>
+        </div>
+      </div>
+
+      <div id="imgGallery" style="display:none;margin-top:16px">
+        <h4>🗂️ ประวัติภาพในรอบนี้</h4>
+        <div id="imgGalleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px"></div>
+      </div>
+    </div>
+  </div>
+  </section>
+
+  <!-- ===== MODE: BOQ ===== -->
+  <section id="mode-boq" class="mode">
+    <div class="card">
+      <h3>📊 โหมดประมาณราคา (BOQ)</h3>
+      <div class="note tip">โหมดนี้แยกออกมาเฉพาะงานประมาณราคา — ตั้งค่าระบบอาคาร/ขอบเขตงาน, จัดการราคากลาง แล้วสร้างคำสั่งตาราง BOQ ได้ในที่เดียว</div>
+    </div>
+    <div id="tab-mep" class="mode-pane">
+    <div class="grid">
+      <div class="card"><h3>⚡ ระบบไฟฟ้า</h3>
+        <div class="field"><label>ระบบไฟฟ้า</label><select id="cbPhase"></select></div>
+        <div class="field"><label>อุปกรณ์เสริม</label><select id="cbAddons"></select></div>
+      </div>
+      <div class="card"><h3>🚰 ระบบสุขาภิบาล</h3>
+        <div class="field"><label>ประเภทท่อ</label><select id="cbPipe"></select></div>
+        <div class="field"><label>ถังบำบัด</label><select id="cbSeptic"></select></div>
+        <div class="field"><label>ถังเก็บน้ำ</label><select id="cbWaterTank"></select></div>
+      </div>
+      <div class="card"><h3>🍳 ภายในหลัก</h3>
+        <div class="field"><label>รูปแบบครัว</label><select id="cbKitchenType"></select></div>
+        <div class="field"><label>ท็อปเคาน์เตอร์</label><select id="cbCountertop"></select></div>
+        <div class="field"><label>สไตล์ห้องน้ำ</label><select id="cbToiletStyle"></select></div>
+        <div class="field"><label>สุขภัณฑ์</label><select id="cbSanitaryBrand"></select></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h3>📊 BOQ (ประมาณการราคา)</h3>
+      <div class="note tip">ติ๊ก “รวม BOQ” ในส่วนสร้างคำสั่งด้านล่าง เพื่อให้ AI แนบรายการประมาณราคาตามค่าที่ตั้งไว้ตรงนี้</div>
+      <div class="grid">
+        <div class="field"><label>รูปแบบ BOQ</label><select id="cbBOQFormat"></select></div>
+        <div class="field"><label>ฐานราคา</label><select id="cbPriceBasis"></select></div>
+        <div class="field"><label>ค่าแรง</label><select id="cbLaborRate"></select></div>
+        <div class="field"><label>เผื่อเสียหาย / Wastage (%)</label><input type="number" id="txtWastage" value="5" step="0.5"></div>
+      </div>
+      <h4 style="margin-top:8px">ขอบเขตงาน (Scope)</h4>
+      <div class="checks">
+        <label><input type="checkbox" id="chkStruct" checked> โครงสร้าง</label>
+        <label><input type="checkbox" id="chkArch" checked> สถาปัตยกรรม</label>
+        <label><input type="checkbox" id="chkElec"> งานไฟฟ้า</label>
+        <label><input type="checkbox" id="chkSanitary"> งานสุขาภิบาล</label>
+        <label><input type="checkbox" id="chkInterior"> งานตกแต่งภายใน</label>
+      </div>
+    </div>
+  </div>
+    <div id="tab-pricedb" class="mode-pane">
+    <div class="card">
+      <h3>💰 ฐานราคากลาง (อ้างอิงกรมโยธาธิการและผังเมือง ปี 2569)</h3>
+      <div class="note tip" style="margin-bottom:10px">
+        ⚠️ ชุดเริ่มต้นเป็น <strong>ตัวอย่างรายการที่พบบ่อย</strong> ถอดจากบัญชีราคากลาง DPT 2569 บางส่วนเท่านั้น
+        ไม่ครบทั้ง 5,700 รายการ — ใช้ประกอบการประมาณการเบื้องต้น ตรวจสอบกับเล่มจริงก่อนใช้งานจริงทุกครั้ง
+        นำเข้าราคาเพิ่ม/ทับได้ด้วยไฟล์ .csv
+      </div>
+      <div class="opt-row" style="gap:8px;flex-wrap:wrap">
+        <button id="btnImportCSV" class="btn">📥 นำเข้าราคา (.csv)</button>
+        <input type="file" id="fileCSV" accept=".csv,text/csv" style="display:none">
+        <button id="btnTemplateCSV" class="btn ghost">📄 ดาวน์โหลดเทมเพลต .csv</button>
+        <button id="btnExportCSV" class="btn ghost">⬇️ ส่งออกราคาทั้งหมด</button>
+        <button id="btnAddPrice" class="btn ghost">➕ เพิ่มรายการ</button>
+        <button id="btnResetPriceDB" class="btn danger">↺ คืนค่าชุดเริ่มต้น</button>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>ค้นหารายการ</label>
+        <input type="text" id="priceSearch" placeholder="พิมพ์ชื่อรายการ หรือรหัส เช่น เสาเข็ม, AR5240">
+      </div>
+      <div id="priceStat" class="note ok" style="margin-top:8px">—</div>
+      <div style="overflow:auto;max-height:460px;border:1px solid var(--line);border-radius:10px;margin-top:8px">
+        <table id="priceTable" style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="position:sticky;top:0;background:var(--paper)">
+            <th style="text-align:left;padding:6px">หมวด</th>
+            <th style="text-align:left;padding:6px">รหัส</th>
+            <th style="text-align:left;padding:6px">รายการ</th>
+            <th style="text-align:left;padding:6px">หน่วย</th>
+            <th style="text-align:right;padding:6px">ค่าวัสดุ</th>
+            <th style="text-align:right;padding:6px">ค่าแรง</th>
+            <th style="padding:6px"></th>
+          </tr></thead>
+          <tbody id="priceTbody"></tbody>
+        </table>
+      </div>
+      <div class="note tip" style="margin-top:8px">
+        รูปแบบ .csv: <code>category,code,item,unit,material,labor,note</code> (บรรทัดแรกเป็นหัวตาราง, ราคาเป็นตัวเลขล้วน)
+      </div>
+    </div>
+    <div class="card">
+      <h3>🧮 ใช้ราคากลางกับ BOQ</h3>
+      <div class="opt-row"><label><input type="checkbox" id="chkUsePriceDB" checked> แนบราคากลางชุดนี้เข้าไปในคำสั่ง BOQ ให้ AI ใช้ราคานี้เท่านั้น (ห้ามกุราคาเอง)</label></div>
+      <div class="note ok" style="margin-top:6px">เมื่อเปิด: ปุ่ม "📊 สร้าง BOQ" จะแนบตารางราคากลางที่ตรงกับขอบเขตงาน แล้วสั่งให้ AI คำนวณ ปริมาณ × ราคา จากรายการเหล่านี้</div>
+    </div>
+  </div>
+    
+    <div class="card">
+      <h3>📊 สร้างคำสั่ง BOQ (ตารางประมาณราคา)</h3>
+      <div class="note tip">ตั้งค่าขอบเขตงานและรูปแบบด้านบน → กดปุ่มสร้าง จะได้คำสั่งให้ AI ทำ "ตารางประมาณราคา" อย่างเดียว ไม่มีภาพบ้าน ถ้าเปิดใช้ราคากลาง ระบบจะแนบราคาให้ AI คำนวณ ปริมาณ × ราคา</div>
+      <div class="btn-group">
+        <button id="btnBOQ" class="btn primary">📊 สร้างคำสั่ง BOQ</button>
+        <button id="btnCopyBOQ" class="btn blue">📋 คัดลอก</button>
+        <button id="btnDownloadBOQ" class="btn ghost">⬇️ ดาวน์โหลด .txt</button>
+      </div>
+    </div>
+    <div class="out">
+      <div class="out-head">
+        <span>📊 คำสั่ง BOQ สำหรับ AI</span>
+        <div class="badges"><span class="badge gold">📄 ตารางเท่านั้น</span><span class="badge red">🇬🇧 English</span></div>
+      </div>
+      <textarea id="txtPromptBOQ" class="prompt" readonly placeholder="กดปุ่ม 'สร้างคำสั่ง BOQ' เพื่อสร้างคำสั่ง..."></textarea>
+    </div>
+  </section>
+
+  <!-- ===== MODE: SAVE ===== -->
+  <section id="mode-save" class="mode">
+    <div id="tab-database" class="mode-pane">
+    <div class="card">
+      <h3>💾 บันทึกประวัติและเรียกคืน</h3>
+      <div class="note ok">บันทึกลงเครื่องของคุณ (localStorage) — ข้อมูลจะอยู่แม้ปิด/เปิดหน้าใหม่</div>
+      <div class="checks" style="margin-bottom:14px">
+        <label><input type="checkbox" id="chkSaveHistory" checked> บันทึกประวัติอัตโนมัติเมื่อกดสร้าง</label>
+        <label><input type="checkbox" id="chkEnforceContinuity" checked> 🔗 บังคับความต่อเนื่องระหว่างแผ่น</label>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>เลือกโปรเจค</label><select id="cbSelectProject"></select></div>
+        <div class="field"><label>เลือกแผ่นงาน</label><select id="cbSelectSheet"></select></div>
+      </div>
+      <div class="btn-group" style="border-top:none;padding-top:0;margin-top:6px">
+        <button id="btnSaveSheet" class="btn primary">💾 บันทึกแผ่นนี้</button>
+        <button id="btnRestoreForm" class="btn blue">📥 เรียกคืน</button>
+        <button id="btnDeleteSheet" class="btn ghost">🗑️ ลบแผ่นนี้</button>
+        <button id="btnClearDB" class="btn danger">⚠️ ล้างฐานข้อมูลทั้งหมด</button>
+      </div>
+      <div class="field" style="margin-top:16px"><label>URL อ้างอิง 3D Model</label><input type="text" id="txtRefURL" placeholder="https://..."></div>
+      <div class="note tip" id="dbStat" style="margin:14px 0 0">ยังไม่มีข้อมูลบันทึก</div>
+    </div>
+  </div>
+  </section>
+
+  <!-- ===== MODE: HELP ===== -->
+  <section id="mode-help" class="mode">
+    <div id="tab-help" class="mode-pane">
+    <div class="card">
+      <h3>📖 โปรแกรมนี้คืออะไร</h3>
+      <p style="line-height:1.7;margin:0">
+        เครื่องมือนี้ช่วย <strong>สร้าง "คำสั่ง" (prompt) ภาษาอังกฤษ</strong> สำหรับนำไปวางใน AI สร้างภาพ
+        (เช่น ChatGPT, Midjourney, Gemini) เพื่อให้ AI วาดภาพงานสถาปัตยกรรม เช่น ภาพ 3D, แปลนพื้น,
+        รูปด้าน, รูปตัด, บอร์ดนำเสนอ และตารางประมาณราคา (BOQ). คุณกรอกข้อมูลเป็นภาษาไทยผ่านหน้าจอ
+        โปรแกรมจะแปลงเป็นคำสั่งภาษาอังกฤษที่ละเอียดให้อัตโนมัติ — <strong>ตัวโปรแกรมไม่ได้สร้างภาพเอง</strong>
+        แต่สร้างคำสั่งให้คุณนำไปใช้กับ AI
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>🚀 เริ่มใช้ใน 4 ขั้นตอน</h3>
+      <ol style="line-height:1.8;margin:0;padding-left:20px">
+        <li><strong>เลือกประเภทอาคาร</strong> ในแท็บ "🏠 ข้อมูลทั่วไป" — ระบบจะเติมค่าพื้นฐานที่เหมาะสมให้ทุกแท็บทันที (จำนวนชั้น พื้นที่ วัสดุ ระบบไฟ ฯลฯ)</li>
+        <li><strong>ปรับแต่งรายละเอียด</strong> ในแท็บต่าง ๆ ตามต้องการ (สถาปัตยกรรม / ภายใน / ฝ้า-ไฟ / ภูมิทัศน์ / วัสดุ) — คำสั่งจะอัปเดตอัตโนมัติทุกครั้งที่เปลี่ยนค่า</li>
+        <li><strong>กดปุ่ม "สร้างคำสั่ง"</strong> ด้านล่าง แล้วกด <strong>"คัดลอก"</strong> หรือ <strong>"ดาวน์โหลด"</strong></li>
+        <li><strong>นำคำสั่งไปวางใน AI สร้างภาพ</strong> (วางในช่องแชต ChatGPT/Midjourney แล้วสั่งสร้างภาพได้เลย)</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>🔘 ปุ่มต่าง ๆ ทำอะไร</h3>
+      <ul style="line-height:1.8;margin:0;padding-left:20px">
+        <li><strong>สร้างคำสั่ง</strong> — สร้าง/รีเฟรชคำสั่งจากข้อมูลล่าสุด</li>
+        <li><strong>คัดลอก / ดาวน์โหลด</strong> — คัดลอกคำสั่งไปใช้ หรือบันทึกเป็นไฟล์ .txt</li>
+        <li><strong>แผ่นถัดไป</strong> — เลื่อนไปทำแบบแผ่นถัดไปตามรายการ (เช่น 3D → รูปด้าน → แปลน) มีตัวนับบอกว่าอยู่แผ่นที่เท่าไรจากทั้งหมด เมื่อครบทุกแผ่นจะหยุดเอง</li>
+        <li><strong>โหมดด่วน</strong> — สร้าง + คัดลอก + บันทึก + ไปแผ่นถัดไป ในปุ่มเดียว เหมาะเวลาทำหลายแผ่นเร็ว ๆ</li>
+        <li><strong>รีเซ็ต Seed</strong> — เริ่มชุดงานใหม่ กลับไปแผ่นแรก</li>
+        <li><strong>📊 สร้าง BOQ (ตาราง)</strong> — สร้างคำสั่งทำเฉพาะตารางประมาณราคา ไม่มีภาพบ้าน</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>💰 เรื่องราคากลาง (BOQ)</h3>
+      <p style="line-height:1.7;margin:0 0 8px">
+        แท็บ "💰 ราคากลาง" มีราคาตั้งต้นบางส่วนอ้างอิงจากบัญชีราคากลางกรมโยธาธิการและผังเมือง ปี 2569
+        คุณนำเข้าราคาเพิ่มเองได้ด้วยไฟล์ .csv (มีปุ่มดาวน์โหลดเทมเพลตให้) แก้ไขราคาในตารางได้โดยดับเบิลคลิกที่ช่อง
+      </p>
+      <div class="note tip" style="margin:0">
+        ⚠️ <strong>คำเตือนสำคัญ:</strong> ตัวเลขราคาในตาราง BOQ เป็นเพียง <strong>ค่าประมาณการเบื้องต้น</strong>
+        ชุดราคาตั้งต้นยังไม่ครบทุกรายการ <strong>ห้ามนำไปใช้ตั้งงบประมาณจริง ประมูล หรือเซ็นสัญญา</strong>
+        โดยไม่ตรวจสอบกับเล่มราคากลางฉบับจริงและผู้ประมาณราคา (QS) ก่อน
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>💾 บันทึกงาน</h3>
+      <p style="line-height:1.7;margin:0">
+        แท็บ "💾 ฐานข้อมูล" ใช้บันทึกแผ่นงานไว้เรียกคืนภายหลัง ข้อมูลเก็บไว้ใน
+        เบราว์เซอร์ของเครื่องที่ใช้ (localStorage) — <strong>ไม่ได้ส่งขึ้นเซิร์ฟเวอร์</strong> และ
+        จะอยู่เฉพาะในเบราว์เซอร์เครื่องนั้น ถ้าล้างข้อมูลเบราว์เซอร์หรือเปลี่ยนเครื่อง ข้อมูลที่บันทึกจะหาย
+        แนะนำให้กด "ดาวน์โหลด" คำสั่งสำคัญเก็บเป็นไฟล์ไว้ด้วย
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>💡 เคล็ดลับให้ AI สร้างภาพได้เลยไม่ถามกลับ</h3>
+      <ul style="line-height:1.8;margin:0;padding-left:20px">
+        <li>คำสั่งระบุไว้แล้วว่าให้ AI สร้างภาพทันทีโดยไม่ต้องถาม ถ้ายังถาม ให้พิมพ์ต่อท้ายว่า "สร้างเลย ไม่ต้องถาม"</li>
+        <li>ค่าในคำสั่งเป็นไทยพร้อมอังกฤษในวงเล็บ เพื่อให้ AI เข้าใจตรงกัน</li>
+        <li>ถ้าต้องการใส่ลายน้ำชื่อบริษัท ติ๊ก "💧 ลายน้ำ" แล้วพิมพ์ข้อความในช่องด้านล่าง</li>
+      </ul>
+    </div>
+  </div>
+  </section>
+</div>
+<script>
+"use strict";
+/* =================== ข้อมูลพื้นฐาน (Domain Data) =================== */
+const buildingTypes = ["บ้านพักอาศัย","บ้านแฝด","บ้านแถว","ทาวน์เฮาส์","คอนโดมิเนียม","แมนชั่น","ร้านกาแฟ","ร้านอาหาร","ร้านค้า","ห้างสรรพสินค้า","ตลาด","โชว์รูม","อาคารสำนักงาน","อาคารจอดรถ","อาคารโรงงาน","อาคารโกดัง","โรงแรม","รีสอร์ท","โรงเรียน","มหาวิทยาลัย","โรงพยาบาล","คลินิก","สถานีตำรวจ","สถานีดับเพลิง","วัด/ศาสนสถาน","โบสถ์","มัสยิด","ศาลเจ้า","พิพิธภัณฑ์","ห้องสมุด","สวนสาธารณะ","สนามกีฬา","สระว่ายน้ำ","ฟิตเนส","สปา","ร้านเสริมสวย","ปั๊มน้ำมัน","ลานจอดรถ","สถานีขนส่ง","สนามบิน","ท่าเรือ","สถานีรถไฟ"];
+const extensionDetails = ["ไม่มี (สร้างใหม่)","ต่อเติมครัวด้านหลังบ้าน","ต่อเติมโรงจอดรถด้านข้าง","ต่อเติมห้องนอนด้านข้าง","เพิ่มชั้นอาคาร","ต่อเติมดาดฟ้า","ต่อเติมห้องซักล้าง","ปรับปรุงภายในบ้านเก่า","ปรับปรุงภายนอกอาคาร","ต่อเติมห้องทำงานในสวน","เพิ่มลิฟต์ภายนอก","เปลี่ยนการใช้งานอาคารเดิม","ต่อเติมระเบียง","ต่อเติมเฉลียง"];
+
+const stylePart1 = ["โมเดิร์น (Modern)","โมเดิร์นลอฟท์ (Modern Loft)","มินิมอล (Minimalist)","นอร์ดิก (Nordic/Scandinavian)","คอนเทมโพรารี (Contemporary)","อินดัสเทรียล (Industrial)"];
+const stylePart2 = ["ทรอปิคอล (Tropical)","เมดิเตอร์เรเนียน (Mediterranean)","บาหลี (Balinese)","ญี่ปุ่น (Japanese)","จีน (Chinese)","โคโลเนียล (Colonial)"];
+const stylePart3 = ["วิคตอเรียน (Victorian)","โกธิค (Gothic)","อาร์ตเดโค (Art Deco)","บาร็อก (Baroque)","เรอเนสซองส์ (Renaissance)","นีโอคลาสสิก (Neoclassical)"];
+const thaiStyles = ["🏠 ทรงไทยบ้านเรือน (Traditional Thai House)","🛕 ทรงไทยวัด/ศาสนสถาน (Thai Temple/Wat)"];
+
+const roofStyles = ["หลังคาเรียบ (Flat Roof)","หลังคาเพิงหมาแหงน (Shed Roof)","หลังคาจั่ว (Gable Roof)","หลังคาปั้นหยา (Hip Roof)","หลังคาทรงแป (Mansard Roof)","หลังคาทรงผีเสื้อ (Butterfly Roof)","หลังคาโค้ง (Barrel Roof)","หลังคาโดม (Dome Roof)","หลังคาทรงปั้นหยาจั่ว (Dutch Hip Gable)","หลังคาทรงไทยบ้านเรือน (Thai Traditional House Roof)","หลังคาทรงไทยวัด (Thai Temple Roof)","หลังคาทรงญี่ปุ่น (Japanese Roof)","หลังคาทรงจีน (Chinese Roof)","หลังคาเขียว (Green Roof)"];
+const extTones = ["สว่าง: ขาว ไม้สีอ่อน เทา กระจก","สว่าง: ครีม น้ำตาลอ่อน ขาวเทา","เข้ม: เทาดำ ไม้เข้ม ดำด้าน","เข้ม: สีเอิร์ธโทน หินเทา น้ำตาลเข้ม","กลาง: เทาอ่อน ขาว ไม้ระแนง","โมเดิร์น: เทาอ่อน เทาเข้ม ดำ","มินิมอล: ขาว ไม้ซีด ดำ","โทนดิน: ครีม น้ำตาลอ่อน","หรูหรา: ขาว หินอ่อนสีเทา ทอง","นอร์ดิก: ขาว ไม้ซีด เทา","อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ","ไทย: น้ำตาลไม้สัก ทองแดง เขียวใบไม้"];
+const intTones = ["อบอุ่นน่ารัก","ทันสมัยสดใส","หรูหรา","อินดัสเทรียล","มูจิเรียบง่าย","สแกนดิเนเวียน","เข้มมีระดับ","ร่วมสมัยเขตร้อน","ญี่ปุ่นร่วมสมัย","ไทยประยุกต์","โทนดิน"];
+const atmospheres = ["แสงแดดส่องตรง","แสงทองยามเย็น","แสงสนธยา","แสงธรรมชาติอ่อนนุ่ม","บรรยากาศฝนตก","แสงไฟยามค่ำคืน","บรรยากาศหมอกยามเช้า","แสงรำไรผ่านต้นไม้"];
+const floors = ["1","ชั้นครึ่ง","2","3","4","5","6","7","8","9","10"];
+const a10 = ["0","1","2","3","4","5","6","7","8","9","10"];
+/* ค่าพื้นฐานต่อประเภทอาคาร: floors, area(ตร.ม.), bed, bath, parking, style, roof, atmosphere, program(โปรแกรมการใช้งาน) */
+/* คำแปลอังกฤษ สำหรับแสดงคู่กับไทยในพรอมต์ (ช่วยให้ AI สร้างภาพแม่นขึ้น) */
+const EN = {
+  // ประเภทอาคาร
+  "บ้านพักอาศัย":"Single-family house","บ้านแฝด":"Semi-detached house","บ้านแถว":"Row house","ทาวน์เฮาส์":"Townhouse","คอนโดมิเนียม":"Condominium building","แมนชั่น":"Apartment building","ร้านกาแฟ":"Coffee shop / Cafe","ร้านอาหาร":"Restaurant","ร้านค้า":"Retail shop","ห้างสรรพสินค้า":"Shopping mall","ตลาด":"Market","โชว์รูม":"Showroom","อาคารสำนักงาน":"Office building","อาคารจอดรถ":"Parking building","อาคารโรงงาน":"Factory","อาคารโกดัง":"Warehouse","โรงแรม":"Hotel","รีสอร์ท":"Resort","โรงเรียน":"School","มหาวิทยาลัย":"University building","โรงพยาบาล":"Hospital","คลินิก":"Clinic","สถานีตำรวจ":"Police station","สถานีดับเพลิง":"Fire station","วัด/ศาสนสถาน":"Thai Buddhist temple","โบสถ์":"Church","มัสยิด":"Mosque","ศาลเจ้า":"Chinese shrine","พิพิธภัณฑ์":"Museum","ห้องสมุด":"Library","สวนสาธารณะ":"Public park","สนามกีฬา":"Stadium","สระว่ายน้ำ":"Swimming pool facility","ฟิตเนส":"Fitness gym","สปา":"Spa","ร้านเสริมสวย":"Beauty salon","ปั๊มน้ำมัน":"Gas station","ลานจอดรถ":"Parking lot","สถานีขนส่ง":"Bus terminal","สนามบิน":"Airport terminal","ท่าเรือ":"Ferry pier","สถานีรถไฟ":"Train station",
+  // โทนสี / วัสดุ ที่พบบ่อย
+  "อินดัสเทรียล":"Industrial","ทันสมัยสดใส":"Modern bright","มูจิเรียบง่าย":"Muji minimal","สแกนดิเนเวียน":"Scandinavian","หรูหรา":"Luxury","ร่วมสมัยเขตร้อน":"Tropical contemporary","ญี่ปุ่นร่วมสมัย":"Japanese contemporary","ไทยประยุกต์":"Applied Thai","เข้มมีระดับ":"Dark refined","โทนดิน":"Earth tone","อบอุ่นน่ารัก":"Warm cozy",
+  "ผนังแบบผสม":"Mixed-material wall","ผนังฉาบเรียบ":"Smooth plaster wall","ผนังโลหะ":"Metal wall","ผนังไม้ระแนง":"Wood batten wall","ผนังหินธรรมชาติ":"Natural stone wall","อิฐมวลเบา":"Autoclaved aerated concrete (AAC) block","ไม้สัก":"Teak wood","ไม้จริง":"Solid wood",
+  "คอนกรีตขัดมัน":"Polished concrete","กระเบื้องพอร์ซเลน":"Porcelain tile","หินอ่อน":"Marble","หินแกรนิต":"Granite","พื้นไม้สัก":"Teak wood floor","พื้นทรายล้าง":"Exposed aggregate floor","ไม้เทียมลายไม้":"Wood-look composite","ไม้เทียม":"Composite wood",
+  "เมทัลชีท":"Metal sheet roof","พื้นคอนกรีต":"Concrete slab roof","กระเบื้องซีแพค":"CPAC concrete roof tile","กระเบื้องดินเผาทรงไทย":"Thai-style terracotta roof tile","กระเบื้องเกล็ดเต่า":"Fish-scale roof tile",
+  // บรรยากาศ
+  "แสงแดดส่องตรง":"Direct sunlight","แสงทองยามเย็น":"Golden hour light","แสงสนธยา":"Twilight","แสงธรรมชาติอ่อนนุ่ม":"Soft natural light","บรรยากาศฝนตก":"Rainy atmosphere","แสงไฟยามค่ำคืน":"Night lighting","บรรยากาศหมอกยามเช้า":"Morning mist","แสงรำไรผ่านต้นไม้":"Dappled light through trees"
+};
+function bili(thai){ const t=(thai||"").trim(); const e=EN[t]; return e ? `${t} (${e})` : t; }
+
+/* หมวดอาคาร → ใช้กำหนดค่าตั้งต้นของแท็บไฟ/ประปา/สุขภัณฑ์/ฝ้า/ภูมิทัศน์ */
+const buildingCategory = {
+  "บ้านพักอาศัย":"res","บ้านแฝด":"res","บ้านแถว":"res","ทาวน์เฮาส์":"res","คอนโดมิเนียม":"res_hi","แมนชั่น":"res_hi",
+  "ร้านกาแฟ":"com_s","ร้านอาหาร":"com_s","ร้านค้า":"com_s","โชว์รูม":"com_s","ร้านเสริมสวย":"com_s","คลินิก":"com_s","สปา":"com_s","ฟิตเนส":"com_s",
+  "ห้างสรรพสินค้า":"com_l","ตลาด":"com_l","อาคารสำนักงาน":"com_l","โรงแรม":"com_l","สถานีขนส่ง":"com_l","สถานีรถไฟ":"com_l","สนามบิน":"com_l","ท่าเรือ":"com_l","สนามกีฬา":"com_l","พิพิธภัณฑ์":"com_l","ห้องสมุด":"com_l","มหาวิทยาลัย":"com_l","โรงเรียน":"com_l","โรงพยาบาล":"com_l",
+  "อาคารโรงงาน":"ind","อาคารโกดัง":"ind","อาคารจอดรถ":"ind","ลานจอดรถ":"ind","ปั๊มน้ำมัน":"ind","สถานีดับเพลิง":"ind","สถานีตำรวจ":"com_s",
+  "รีสอร์ท":"resort","สวนสาธารณะ":"park","สระว่ายน้ำ":"park",
+  "วัด/ศาสนสถาน":"relig","โบสถ์":"relig","มัสยิด":"relig","ศาลเจ้า":"relig"
+};
+/* ค่าตั้งต้นเสริมต่อหมวด (ค่าทั้งหมดตรงกับ option ใน dropdown จริง) */
+const categoryDefaults = {
+  res:    {phase:"1 เฟส", pipe:"พีวีซี ชั้น 8.5", septic:"ถังบำบัด 1,600 ลิตร", waterTank:"ถังไฟเบอร์กลาส 2,000 ลิตร", kitchenType:"ครัวรูปตัวแอล", countertop:"หินแกรนิต", toilet:"มินิมอลขาว", sanitary:"คอตโต้", ceiling:"ยิปซั่มเรียบ", ceilingColor:"ขาว", light:"ดาวน์ไลท์", garden:"สวนหย่อม", walkway:"ทางเดินหิน", lawn:"สนามหญ้าจริง", water:"ไม่มี", seating:"ลานปูหิน", surface:"หินเกล็ด", addons:"ไม่มี", piling:"เสาเข็มไอ ไอ-18 ยาว 12 ม."},
+  res_hi: {phase:"3 เฟส", pipe:"พีวีซี ชั้น 13.5", septic:"ระบบบำบัดน้ำเสียรวม", waterTank:"ถังสแตนเลส 5,000 ลิตร", kitchenType:"ครัวโมดูลาร์", countertop:"หินควอทซ์", toilet:"มินิมอลขาว", sanitary:"อเมริกันสแตนดาร์ด", ceiling:"ยิปซั่มเรียบ", ceilingColor:"ขาว", light:"ดาวน์ไลท์", garden:"สวนแนวดิ่ง", walkway:"ทางเดินคอนกรีต", lawn:"สนามหญ้าเทียม", water:"สระว่ายน้ำ", seating:"ลานปูหิน", surface:"หินเกล็ด", addons:"ลิฟต์ส่วนตัว", piling:"เสาเข็มไอ ไอ-26 ยาว 21 ม."},
+  com_s:  {phase:"3 เฟส", pipe:"พีวีซี ชั้น 13.5", septic:"ถังบำบัด 2,000 ลิตร", waterTank:"ถังสแตนเลส 2,000 ลิตร", kitchenType:"ครัวเปิด", countertop:"สแตนเลส", toilet:"โมเดิร์นลอฟท์", sanitary:"คอตโต้", ceiling:"ยิปซั่มเรียบ", ceilingColor:"ขาว", light:"รางไฟ", garden:"สวนหย่อม", walkway:"ทางเดินคอนกรีต", lawn:"ไม่มี", water:"ไม่มี", seating:"ลานปูหิน", surface:"ซีเมนต์ลายไม้", addons:"ไม่มี", piling:"เสาเข็มไอ ไอ-18 ยาว 12 ม."},
+  com_l:  {phase:"3 เฟส", pipe:"พีอี", septic:"ระบบบำบัดน้ำเสียรวม", waterTank:"ถังสแตนเลส 5,000 ลิตร", kitchenType:"ครัวโมดูลาร์", countertop:"สแตนเลส", toilet:"มินิมอลขาว", sanitary:"อเมริกันสแตนดาร์ด", ceiling:"ฝ้าดรอป", ceilingColor:"ขาว", light:"รางไฟ", garden:"สวนหย่อม", walkway:"ทางเดินคอนกรีต", lawn:"สนามหญ้าจริง", water:"ไม่มี", seating:"ลานปูหิน", surface:"หินเกล็ด", addons:"ระบบสมาร์ทโฮม", piling:"เสาเข็มไอ ไอ-30 ยาว 24 ม."},
+  ind:    {phase:"3 เฟส", pipe:"ท่อเหล็กดำ", septic:"ระบบบำบัดน้ำเสียรวม", waterTank:"ถังสแตนเลส 5,000 ลิตร", kitchenType:"ครัวเปิด", countertop:"สแตนเลส", toilet:"อินดัสเทรียล", sanitary:"คอตโต้", ceiling:"อลูมิเนียม", ceilingColor:"เทาอ่อน", light:"สปอตไลท์", garden:"ไม่มี", walkway:"ทางเดินคอนกรีต", lawn:"ไม่มี", water:"ไม่มี", seating:"ไม่มี", surface:"กรวด", addons:"ไม่มี", piling:"เสาเข็มไอ ไอ-30 ยาว 24 ม."},
+  resort: {phase:"3 เฟส", pipe:"พีวีซี ชั้น 13.5", septic:"ระบบบำบัดน้ำเสียรวม", waterTank:"ถังสแตนเลส 5,000 ลิตร", kitchenType:"ครัวเปิด", countertop:"หินแกรนิต", toilet:"เซน", sanitary:"โตโต้", ceiling:"ไม้เทียม", ceilingColor:"สีไม้", light:"โคมแขวน", garden:"สวนบาหลี", walkway:"ทางเดินไม้", lawn:"สนามหญ้าจริง", water:"สระว่ายน้ำอินฟินิตี้", seating:"ศาลา", surface:"หินกาบ", addons:"สวนและภูมิทัศน์", piling:"เสาเข็มไอ ไอ-18 ยาว 12 ม."},
+  park:   {phase:"3 เฟส", pipe:"พีวีซี ชั้น 8.5", septic:"ถังบำบัด 3,000 ลิตร", waterTank:"ถังคอนกรีต 2,000 ลิตร", kitchenType:"ครัวเปิด", countertop:"คอนกรีตขัดมัน", toilet:"มินิมอลขาว", sanitary:"คอตโต้", ceiling:"PVC", ceilingColor:"ขาว", light:"สปอตไลท์", garden:"สวนหย่อม", walkway:"ทางเดินหิน", lawn:"สนามหญ้าจริง", water:"สระน้ำธรรมชาติ", seating:"ศาลา", surface:"หินกาบ", addons:"สวนและภูมิทัศน์", piling:"ไม่มีเข็ม"},
+  relig:  {phase:"3 เฟส", pipe:"พีวีซี ชั้น 8.5", septic:"ถังบำบัด 3,000 ลิตร", waterTank:"ถังคอนกรีต 2,000 ลิตร", kitchenType:"ครัวไทย", countertop:"หินแกรนิต", toilet:"ไทยโมเดิร์น", sanitary:"คอตโต้", ceiling:"ฝ้าลายไทย", ceilingColor:"สีไม้", light:"โคมระย้า", garden:"สวนหิน", walkway:"ทางเดินหิน", lawn:"สนามหญ้าจริง", water:"ไม่มี", seating:"ศาลา", surface:"หินกาบ", addons:"ไม่มี", piling:"เสาเข็มไอ ไอ-22 ยาว 21 ม."}
+};
+
+
+/* ===== ฐานราคากลาง (อ้างอิงกรมโยธาธิการและผังเมือง ปีงบประมาณ 2569) =====
+   ⚠️ ชุดเริ่มต้น = ตัวอย่างรายการที่พบบ่อย ถอดจากเล่มจริงบางส่วน ไม่ครบทุกรายการ
+   ราคา: material = ค่าวัสดุต่อหน่วย, labor = ค่าแรงต่อหน่วย (บาท) ; "-" ในเล่ม = 0 ที่นี่ */
+const PRICE_DB_DEFAULT = [
+  // ---- ST งานดิน/ฐานราก (ค่าแรงต่อ ลบ.ม.) ----
+  {category:"ST โครงสร้าง", code:"ST1000", item:"งานขุดดินทั่วไป (ปริมาณ 25-100 ลบ.ม.)", unit:"ลบ.ม.", material:0, labor:125, note:"DPT2569 2-1"},
+  {category:"ST โครงสร้าง", code:"ST1006", item:"ทรายหยาบรองพื้น", unit:"ลบ.ม.", material:0, labor:91, note:"DPT2569 2-1"},
+  {category:"ST โครงสร้าง", code:"ST1007", item:"อิฐหักกระทุ้งแน่นรองพื้น", unit:"ลบ.ม.", material:0, labor:104, note:"DPT2569 2-1"},
+  {category:"ST โครงสร้าง", code:"ST1008", item:"คอนกรีตหยาบรองฐานราก 1:3:5", unit:"ลบ.ม.", material:0, labor:398, note:"DPT2569 2-1"},
+  {category:"ST โครงสร้าง", code:"ST1014", item:"บดอัดดิน-ลูกรัง (ธรรมดา)", unit:"ลบ.ม.", material:0, labor:25, note:"DPT2569 2-1"},
+  {category:"ST โครงสร้าง", code:"ST1015", item:"บดอัดดิน-ลูกรัง (แน่น 85%)", unit:"ลบ.ม.", material:0, labor:35, note:"ลูกรัง 46 บาท/ลบ.ม."},
+  // ---- ST เสาเข็ม (ค่าแรงตอก/ต้น, เกณฑ์ 50-100 ต้น) ----
+  {category:"ST โครงสร้าง", code:"ST2000", item:"เสาเข็ม คอร. 0.18x0.18x21 ม. (ตอก)", unit:"ต้น", material:0, labor:980, note:"DPT2569 2-2 (50-100 ต้น)"},
+  {category:"ST โครงสร้าง", code:"ST2001", item:"เสาเข็ม คอร. 0.22x0.22x21 ม. (ตอก)", unit:"ต้น", material:0, labor:1120, note:"DPT2569 2-2 (50-100 ต้น)"},
+  {category:"ST โครงสร้าง", code:"ST2002", item:"เสาเข็ม คอร. 0.25x0.25x21 ม. (ตอก)", unit:"ต้น", material:0, labor:1490, note:"DPT2569 2-2 (50-100 ต้น)"},
+  {category:"ST โครงสร้าง", code:"ST2003", item:"เสาเข็ม คอร. 0.26x0.26x21 ม. (ตอก)", unit:"ต้น", material:0, labor:1340, note:"DPT2569 2-2 (50-100 ต้น)"},
+  {category:"ST โครงสร้าง", code:"ST2004", item:"เสาเข็ม คอร. 0.30x0.30x21 ม. (ตอก)", unit:"ต้น", material:0, labor:1725, note:"DPT2569 2-2 (50-100 ต้น)"},
+  {category:"ST โครงสร้าง", code:"ST2005", item:"เสาเข็ม คอร. 0.35x0.35x21 ม. (ตอก)", unit:"ต้น", material:0, labor:2070, note:"DPT2569 2-2 (50-100 ต้น)"},
+  {category:"ST โครงสร้าง", code:"ST2006", item:"เสาเข็ม คอร. 0.40x0.40x21 ม. (ตอก)", unit:"ต้น", material:0, labor:2340, note:"DPT2569 2-2 (50-100 ต้น)"},
+  // ---- AR สถาปัตยกรรม ----
+  {category:"AR สถาปัตยกรรม", code:"AR5223", item:"กระจกสีเขียวใส หนา 12 มม.", unit:"ตร.ฟ.", material:79, labor:0, note:"DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR5224", item:"กระจกบานเกล็ดฝ้า หนา 5 มม. (4นิ้วx0.60ม.)", unit:"เกล็ด", material:20, labor:0, note:"DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR5240", item:"ผนังห้องน้ำสำเร็จรูป HPL หนา≥13 มม. สีพื้น", unit:"ชุด", material:11000, labor:0, note:"รวมค่าแรง DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR5241", item:"ผนังห้องน้ำสำเร็จรูป HPL สีลายไม้", unit:"ชุด", material:12000, labor:0, note:"รวมค่าแรง DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR5242", item:"ประตู + เสาด้านข้าง (ห้องน้ำสำเร็จรูป)", unit:"ชุด", material:9500, labor:0, note:"รวมค่าแรง DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR5243", item:"แผงกั้นโถปัสสาวะ", unit:"ชุด", material:2500, labor:0, note:"รวมค่าแรง DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR5244", item:"ผนังกั้นห้องน้ำ PU FOAM หนา≥25 มม. ขอบ PVC", unit:"ชุด", material:11000, labor:0, note:"รวมค่าแรง DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR6001", item:"ผิวบันได-ชานพัก หินขัด", unit:"ตร.ม.", material:440, labor:179, note:"รวมปูนทราย DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR6002", item:"ผิวบันได-ชานพัก ทรายล้าง", unit:"ตร.ม.", material:310, labor:99, note:"รวมปูนทราย DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR6003", item:"ผิวบันได-ชานพัก หินล้าง", unit:"ตร.ม.", material:330, labor:99, note:"รวมปูนทราย DPT2569 2-71"},
+  {category:"AR สถาปัตยกรรม", code:"AR-W001", item:"ไม้สังเคราะห์ระแนงผนัง 360x10 มม.", unit:"ตร.ม.", material:633.60, labor:0, note:"1,760/เส้น DPT2569 2-10"},
+  {category:"AR สถาปัตยกรรม", code:"AR-W004", item:"ไม้สังเคราะห์ระแนงผนัง 225x18 มม.", unit:"ตร.ม.", material:617.76, labor:0, note:"2,745.60/เส้น DPT2569 2-10"},
+  // ---- SN สุขาภิบาล (ท่อ HDPE ต่อเมตร, ค่าแรง 20% ของวัสดุ) ----
+  {category:"SN สุขาภิบาล", code:"SN-HDPE6-300", item:"ท่อ HDPE เสริมเหล็ก SN6 Dia 300 มม.", unit:"เมตร", material:2800, labor:560, note:"แรง20% DPT2569 2-192"},
+  {category:"SN สุขาภิบาล", code:"SN-HDPE8-300", item:"ท่อ HDPE เสริมเหล็ก SN8 Dia 300 มม.", unit:"เมตร", material:3700, labor:740, note:"แรง20% DPT2569 2-192"},
+  {category:"SN สุขาภิบาล", code:"SN-HDPE10-300", item:"ท่อ HDPE เสริมเหล็ก SN10 Dia 300 มม.", unit:"เมตร", material:4400, labor:880, note:"แรง20% DPT2569 2-192"},
+  {category:"SN สุขาภิบาล", code:"SN-HDPE8-600", item:"ท่อ HDPE เสริมเหล็ก SN8 Dia 600 มม.", unit:"เมตร", material:4893, labor:979, note:"แรง20% DPT2569 2-192"}
+];
+
+let priceDB = [];
+function loadPriceDB(){
+  try{
+    const raw = localStorage.getItem("ongart_pricedb_v62");
+    priceDB = raw ? JSON.parse(raw) : PRICE_DB_DEFAULT.slice();
+  }catch(e){ priceDB = PRICE_DB_DEFAULT.slice(); }
+  if(!Array.isArray(priceDB) || !priceDB.length) priceDB = PRICE_DB_DEFAULT.slice();
+}
+function persistPriceDB(){
+  try{ localStorage.setItem("ongart_pricedb_v62", JSON.stringify(priceDB)); }
+  catch(e){ toast("บันทึกราคาไม่สำเร็จ (พื้นที่เก็บถูกปิด)", "error"); }
+}
+function num(x){ const n = parseFloat(String(x).replace(/,/g,"")); return isFinite(n) ? n : 0; }
+function fmt(n){ return num(n).toLocaleString("th-TH",{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function renderPriceTable(filter){
+  const tb = $("priceTbody"); if(!tb) return;
+  const f = (filter||"").trim().toLowerCase();
+  const rows = priceDB.map((r,i)=>({r,i})).filter(({r}) =>
+    !f || (r.item+" "+r.code+" "+r.category).toLowerCase().includes(f));
+  tb.innerHTML = rows.map(({r,i}) => `
+    <tr data-i="${i}" style="border-top:1px solid var(--line)">
+      <td style="padding:6px;white-space:nowrap">${r.category||""}</td>
+      <td style="padding:6px;white-space:nowrap">${r.code||""}</td>
+      <td style="padding:6px">${r.item||""}</td>
+      <td style="padding:6px;white-space:nowrap">${r.unit||""}</td>
+      <td style="padding:6px;text-align:right">${fmt(r.material)}</td>
+      <td style="padding:6px;text-align:right">${fmt(r.labor)}</td>
+      <td style="padding:6px;text-align:center"><button class="btn danger btn-del-price" data-i="${i}" style="padding:2px 8px">ลบ</button></td>
+    </tr>`).join("");
+  tb.querySelectorAll(".btn-del-price").forEach(b=>b.addEventListener("click",()=>{
+    const idx = parseInt(b.dataset.i);
+    priceDB.splice(idx,1); persistPriceDB(); renderPriceTable($("priceSearch").value); refreshPriceStat();
+  }));
+  refreshPriceStat();
+}
+function refreshPriceStat(){
+  const el = $("priceStat"); if(!el) return;
+  const cats = {};
+  priceDB.forEach(r => { cats[r.category] = (cats[r.category]||0)+1; });
+  el.innerHTML = `มีทั้งหมด <strong>${priceDB.length}</strong> รายการ — ` +
+    Object.entries(cats).map(([c,n])=>`${c}: ${n}`).join(" · ");
+}
+function parseCSV(text){
+  // simple CSV parser (handles quotes + commas)
+  const rows = []; let cur = []; let val = ""; let q = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(q){
+      if(c === '"' && text[i+1] === '"'){ val += '"'; i++; }
+      else if(c === '"'){ q = false; }
+      else val += c;
+    } else {
+      if(c === '"') q = true;
+      else if(c === ",") { cur.push(val); val=""; }
+      else if(c === "\n"){ cur.push(val); rows.push(cur); cur=[]; val=""; }
+      else if(c === "\r"){ /* skip */ }
+      else val += c;
+    }
+  }
+  if(val.length || cur.length){ cur.push(val); rows.push(cur); }
+  return rows.filter(r => r.length && r.some(x => x.trim() !== ""));
+}
+function importPriceCSV(text){
+  const rows = parseCSV(text);
+  if(!rows.length){ toast("ไฟล์ว่าง", "error"); return; }
+  // detect header
+  const head = rows[0].map(h => h.trim().toLowerCase());
+  const hasHeader = head.includes("item") || head.includes("รายการ") || head.includes("material");
+  const idx = {
+    category: head.indexOf("category"), code: head.indexOf("code"), item: head.indexOf("item"),
+    unit: head.indexOf("unit"), material: head.indexOf("material"), labor: head.indexOf("labor"), note: head.indexOf("note")
+  };
+  const body = hasHeader ? rows.slice(1) : rows;
+  let added = 0;
+  body.forEach(r => {
+    const g = (k, def) => idx[k] >= 0 ? (r[idx[k]]||"").trim() : def;
+    // fallback positional: category,code,item,unit,material,labor,note
+    const rec = hasHeader ? {
+      category: g("category","ทั่วไป"), code: g("code",""), item: g("item",""),
+      unit: g("unit",""), material: num(g("material",0)), labor: num(g("labor",0)), note: g("note","")
+    } : {
+      category: (r[0]||"ทั่วไป").trim(), code:(r[1]||"").trim(), item:(r[2]||"").trim(),
+      unit:(r[3]||"").trim(), material:num(r[4]), labor:num(r[5]), note:(r[6]||"").trim()
+    };
+    if(rec.item){ priceDB.push(rec); added++; }
+  });
+  persistPriceDB(); renderPriceTable($("priceSearch").value);
+  toast(`📥 นำเข้า ${added} รายการแล้ว (รวม ${priceDB.length})`);
+}
+function exportPriceCSV(){
+  const header = "category,code,item,unit,material,labor,note";
+  const esc = v => { v = String(v==null?"":v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const lines = priceDB.map(r => [r.category,r.code,r.item,r.unit,r.material,r.labor,r.note].map(esc).join(","));
+  downloadText("ราคากลาง_DPT2569.csv", header+"\n"+lines.join("\n"));
+}
+function downloadTemplateCSV(){
+  const tmpl = "category,code,item,unit,material,labor,note\n" +
+    "AR สถาปัตยกรรม,AR0001,ผนังก่ออิฐมอญครึ่งแผ่น,ตร.ม.,180,120,ตัวอย่าง\n" +
+    "ST โครงสร้าง,ST0001,คอนกรีตโครงสร้าง 240ksc,ลบ.ม.,2100,450,ตัวอย่าง\n";
+  downloadText("เทมเพลตราคากลาง.csv", tmpl);
+}
+function downloadText(filename, text){
+  try{
+    const blob = new Blob(["\ufeff"+text], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    toast("⬇️ ดาวน์โหลด " + filename);
+  }catch(e){ toast("ดาวน์โหลดไม่สำเร็จ", "error"); }
+}
+/* แนบราคากลางที่ตรงขอบเขตงานเข้าไปในคำสั่ง BOQ */
+function getPriceReferenceForBOQ(){
+  if(!checked("chkUsePriceDB") || !priceDB.length) return "";
+  // เลือกตามขอบเขตที่ติ๊กในแท็บ ระบบ/BOQ
+  const scope = [];
+  if(checked("chkStruct")) scope.push("ST");
+  if(checked("chkArch")) scope.push("AR");
+  if(checked("chkElec")) scope.push("EE");
+  if(checked("chkSanitary")) scope.push("SN");
+  if(checked("chkInterior")) scope.push("IN");
+  const rows = priceDB.filter(r => !scope.length || scope.some(s => (r.category||"").startsWith(s)));
+  const use = rows.length ? rows : priceDB;
+  let t = "\n========================================\nREFERENCE UNIT PRICES — บัญชีราคากลาง กรมโยธาธิการและผังเมือง ปี 2569\n";
+  t += "⚠️ ใช้ราคาต่อหน่วยตามตารางนี้เท่านั้น ห้ามกำหนดราคาเอง คำนวณ ยอด = ปริมาณ × ราคาต่อหน่วย\n";
+  t += "(material = ค่าวัสดุ/หน่วย, labor = ค่าแรง/หน่วย, บาท)\n";
+  t += "code | รายการ | หน่วย | ค่าวัสดุ | ค่าแรง\n";
+  use.forEach(r => { t += `${r.code} | ${r.item} | ${r.unit} | ${fmt(r.material)} | ${fmt(r.labor)}\n`; });
+  t += "หมายเหตุ: ราคาชุดนี้เป็นตัวอย่างบางรายการจากเล่มจริง สำหรับรายการที่ไม่มีในตาราง ให้ระบุว่า \"(ไม่มีราคากลางอ้างอิง)\" แทนการกุราคา\n";
+  return t;
+}
+
+const buildingDefaults = {
+  "บ้านพักอาศัย":   {floors:"2", area:"150", bed:"3", bath:"2", parking:"2", style:"โมเดิร์น (Modern)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงทองยามเย็น", program:"บ้านเดี่ยว: รับแขก, นั่งเล่น, รับประทานอาหาร, ครัว, ห้องนอน, ห้องน้ำ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"กระเบื้องซีแพค"},
+  "บ้านแฝด":        {floors:"2", area:"120", bed:"3", bath:"2", parking:"1", style:"โมเดิร์น (Modern)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงทองยามเย็น", program:"บ้านแฝด 2 ยูนิตติดกัน ผังเหมือนกระจกเงา", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"กระเบื้องซีแพค"},
+  "บ้านแถว":        {floors:"2", area:"100", bed:"2", bath:"2", parking:"1", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"บ้านแถวเรียงต่อกัน หน้าแคบลึก", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "ทาวน์เฮาส์":     {floors:"2", area:"110", bed:"3", bath:"2", parking:"1", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"ทาวน์เฮาส์ในเมือง หน้าแคบ ชั้นล่างรับแขก/ครัว ชั้นบนห้องนอน", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "คอนโดมิเนียม":   {floors:"8", area:"3000", bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"อาคารชุดพักอาศัย: ล็อบบี้, ห้องชุดหลายยูนิต, ลิฟต์, ที่จอดรถ, สิ่งอำนวยความสะดวกส่วนกลาง", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "แมนชั่น":        {floors:"4", area:"1200", bed:"0", bath:"0", parking:"6", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"อพาร์ตเมนต์ให้เช่า: ห้องพักหลายยูนิต, โถงทางเดิน, พื้นที่ส่วนกลาง", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "ร้านกาแฟ":       {floors:"1", area:"80",  bed:"0", bath:"2", parking:"4", style:"โมเดิร์นลอฟท์ (Modern Loft)", roof:"หลังคาเพิงหมาแหงน (Shed Roof)", atmos:"แสงธรรมชาติอ่อนนุ่ม", program:"ร้านกาแฟ: เคาน์เตอร์บาริสต้า/บาร์, ที่นั่งในร้าน, ที่นั่งกลางแจ้ง, ห้องน้ำลูกค้า, หลังครัวเตรียม", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังแบบผสม", floorMat:"คอนกรีตขัดมัน", roofMat:"เมทัลชีท"},
+  "ร้านอาหาร":      {floors:"1", area:"180", bed:"0", bath:"2", parking:"8", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงทองยามเย็น", program:"ร้านอาหาร: โถงรับประทานอาหาร, ครัวเต็มรูปแบบ, เคาน์เตอร์, ห้องน้ำ, ที่จอดรถ", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"กระเบื้องซีแพค"},
+  "ร้านค้า":        {floors:"1", area:"60",  bed:"0", bath:"1", parking:"2", style:"มินิมอล (Minimalist)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"ร้านค้าปลีก: พื้นที่ขาย/โชว์สินค้า, เคาน์เตอร์ชำระเงิน, สต็อก, ห้องน้ำ", extTone:"มินิมอล: ขาว ไม้ซีด ดำ", intTone:"มูจิเรียบง่าย", wallMat:"ผนังฉาบเรียบ", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "ห้างสรรพสินค้า": {floors:"4", area:"15000",bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"ศูนย์การค้า: ร้านค้าหลายร้าน, โถงกลาง (atrium), บันไดเลื่อน, ลิฟต์, ฟู้ดคอร์ท, ที่จอดรถ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "ตลาด":           {floors:"1", area:"2000", bed:"0", bath:"0", parking:"10", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงแดดส่องตรง", program:"ตลาดสด/ตลาดนัด: แผงค้าเป็นแถว, ทางเดินกว้าง, หลังคาคลุมโปร่ง, ระบายอากาศดี", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"กระเบื้องซีแพค"},
+  "โชว์รูม":        {floors:"1", area:"400", bed:"0", bath:"2", parking:"8", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"โชว์รูม: พื้นที่จัดแสดงสินค้าโปร่งกระจก, เคาน์เตอร์ต้อนรับ, ห้องเจรจา, ที่จอดรถ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "อาคารสำนักงาน":  {floors:"5", area:"2500", bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"อาคารสำนักงาน: ล็อบบี้, พื้นที่ทำงานเปิดโล่ง, ห้องประชุม, ลิฟต์, ที่จอดรถ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "อาคารจอดรถ":     {floors:"6", area:"5000", bed:"0", bath:"0", parking:"10", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"อาคารจอดรถ: ช่องจอดหลายชั้น, ทางลาด, ลิฟต์, ช่องระบายอากาศ", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"พื้นคอนกรีต"},
+  "อาคารโรงงาน":    {floors:"1", area:"3000", bed:"0", bath:"0", parking:"10", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงแดดส่องตรง", program:"โรงงาน: พื้นที่ผลิตโล่งกว้าง, สำนักงาน, คลังเก็บของ, ช่องขนถ่ายสินค้า (loading dock)", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"กระเบื้องซีแพค"},
+  "อาคารโกดัง":     {floors:"1", area:"2000", bed:"0", bath:"1", parking:"6", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงแดดส่องตรง", program:"โกดังเก็บสินค้า: พื้นที่จัดเก็บโล่งสูง, ช่องขนถ่าย, สำนักงานเล็ก", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"กระเบื้องซีแพค"},
+  "โรงแรม":         {floors:"6", area:"4000", bed:"0", bath:"0", parking:"10", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"โรงแรม: ล็อบบี้, ห้องพักหลายยูนิต, ห้องอาหาร, สระว่ายน้ำ, ลิฟต์, ที่จอดรถ", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "รีสอร์ท":        {floors:"1", area:"2000", bed:"0", bath:"0", parking:"10", style:"ทรอปิคอล (Tropical)", roof:"หลังคาปั้นหยา (Hip Roof)", atmos:"แสงรำไรผ่านต้นไม้", program:"รีสอร์ท: วิลล่า/บังกะโลกระจายตัว, ล็อบบี้, สระว่ายน้ำ, สวนเขตร้อน, ทางเดินธรรมชาติ", extTone:"โทนดิน: ครีม น้ำตาลอ่อน", intTone:"ร่วมสมัยเขตร้อน", wallMat:"ผนังหินธรรมชาติ", floorMat:"พื้นทรายล้าง", roofMat:"กระเบื้องซีแพค"},
+  "โรงเรียน":       {floors:"3", area:"3000", bed:"0", bath:"0", parking:"8", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงแดดส่องตรง", program:"โรงเรียน: ห้องเรียนหลายห้อง, โถงทางเดิน, สนาม, โรงอาหาร, ห้องน้ำ", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"กระเบื้องซีแพค"},
+  "มหาวิทยาลัย":    {floors:"5", area:"8000", bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"อาคารมหาวิทยาลัย: ห้องบรรยาย, แล็บ, ห้องสมุด, โถงกลาง, ที่จอดรถ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "โรงพยาบาล":      {floors:"6", area:"6000", bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงธรรมชาติอ่อนนุ่ม", program:"โรงพยาบาล: แผนกผู้ป่วยนอก/ใน, ห้องตรวจ, ห้องผ่าตัด, ห้องฉุกเฉิน, ลิฟต์, ที่จอดรถ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "คลินิก":         {floors:"2", area:"200", bed:"0", bath:"2", parking:"4", style:"มินิมอล (Minimalist)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงธรรมชาติอ่อนนุ่ม", program:"คลินิก: ห้องตรวจ, ห้องรอ, เคาน์เตอร์เวชระเบียน, ห้องน้ำ", extTone:"มินิมอล: ขาว ไม้ซีด ดำ", intTone:"มูจิเรียบง่าย", wallMat:"ผนังฉาบเรียบ", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "สถานีตำรวจ":     {floors:"2", area:"800", bed:"0", bath:"0", parking:"8", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงแดดส่องตรง", program:"สถานีตำรวจ: โถงรับแจ้งความ, สำนักงาน, ห้องควบคุม, ที่จอดรถ", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"กระเบื้องซีแพค"},
+  "สถานีดับเพลิง":  {floors:"2", area:"1000", bed:"0", bath:"0", parking:"6", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงแดดส่องตรง", program:"สถานีดับเพลิง: โรงจอดรถดับเพลิง (ประตูบานสูง), หอฝึก, ที่พักเวร, สำนักงาน", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"กระเบื้องซีแพค"},
+  "วัด/ศาสนสถาน":   {floors:"1", area:"400", bed:"0", bath:"0", parking:"10", style:"🛕 ทรงไทยวัด/ศาสนสถาน (Thai Temple/Wat)", roof:"หลังคาทรงไทยวัด (Thai Temple Roof)", atmos:"แสงทองยามเย็น", program:"ศาสนสถานไทย: อุโบสถ/วิหาร, ช่อฟ้าใบระกา, ลานประทักษิณ, หลังคาซ้อนชั้น", extTone:"ไทย: น้ำตาลไม้สัก ทองแดง เขียวใบไม้", intTone:"ไทยประยุกต์", wallMat:"ไม้สัก", floorMat:"พื้นไม้สัก", roofMat:"กระเบื้องดินเผาทรงไทย"},
+  "โบสถ์":          {floors:"1", area:"500", bed:"0", bath:"0", parking:"10", style:"โกธิค (Gothic)", roof:"หลังคาจั่ว (Gable Roof)", atmos:"แสงรำไรผ่านต้นไม้", program:"โบสถ์คริสต์: โถงประกอบพิธี, แท่นบูชา, หน้าต่างกระจกสี, หอคอย", extTone:"หรูหรา: ขาว หินอ่อนสีเทา ทอง", intTone:"หรูหรา", wallMat:"ผนังฉาบเรียบ", floorMat:"หินอ่อน", roofMat:"กระเบื้องซีแพค"},
+  "มัสยิด":         {floors:"1", area:"500", bed:"0", bath:"0", parking:"10", style:"เมดิเตอร์เรเนียน (Mediterranean)", roof:"หลังคาโดม (Dome Roof)", atmos:"แสงทองยามเย็น", program:"มัสยิด: โถงละหมาด, โดม, หอมินาเร่ต์, ที่ชำระล้าง", extTone:"โทนดิน: ครีม น้ำตาลอ่อน", intTone:"ร่วมสมัยเขตร้อน", wallMat:"ผนังฉาบเรียบ", floorMat:"กระเบื้องเซรามิก", roofMat:"พื้นคอนกรีต"},
+  "ศาลเจ้า":        {floors:"1", area:"200", bed:"0", bath:"0", parking:"6", style:"จีน (Chinese)", roof:"หลังคาทรงจีน (Chinese Roof)", atmos:"แสงทองยามเย็น", program:"ศาลเจ้าจีน: โถงบูชา, เสาแดงมังกร, หลังคาโค้งปลายเชิดทรงจีน", extTone:"ไทย: น้ำตาลไม้สัก ทองแดง เขียวใบไม้", intTone:"เข้มมีระดับ", wallMat:"ไม้จริง", floorMat:"หินแกรนิต", roofMat:"กระเบื้องเกล็ดเต่า"},
+  "พิพิธภัณฑ์":     {floors:"2", area:"2000", bed:"0", bath:"0", parking:"10", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"พิพิธภัณฑ์: ห้องจัดแสดงนิทรรศการ, โถงต้อนรับ, พื้นที่ส่วนกลางสูงโปร่ง", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "ห้องสมุด":       {floors:"2", area:"1200", bed:"0", bath:"0", parking:"8", style:"มินิมอล (Minimalist)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงธรรมชาติอ่อนนุ่ม", program:"ห้องสมุด: ชั้นหนังสือ, พื้นที่อ่านหนังสือ, เคาน์เตอร์บริการ, มุมเงียบ", extTone:"มินิมอล: ขาว ไม้ซีด ดำ", intTone:"มูจิเรียบง่าย", wallMat:"ผนังฉาบเรียบ", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "สวนสาธารณะ":     {floors:"1", area:"5000", bed:"0", bath:"2", parking:"10", style:"ทรอปิคอล (Tropical)", roof:"หลังคาเพิงหมาแหงน (Shed Roof)", atmos:"แสงรำไรผ่านต้นไม้", program:"สวนสาธารณะ: ทางเดิน/วิ่ง, พื้นที่สีเขียว, ศาลาพักผ่อน, สนามเด็กเล่น, ห้องน้ำ", extTone:"โทนดิน: ครีม น้ำตาลอ่อน", intTone:"ร่วมสมัยเขตร้อน", wallMat:"ผนังหินธรรมชาติ", floorMat:"พื้นทรายล้าง", roofMat:"เมทัลชีท"},
+  "สนามกีฬา":       {floors:"2", area:"8000", bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาโค้ง (Barrel Roof)", atmos:"แสงไฟยามค่ำคืน", program:"สนามกีฬา: ลู่/สนามแข่ง, อัฒจันทร์, หลังคาคลุม, ห้องแต่งตัว, ที่จอดรถ", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"เมทัลชีท"},
+  "สระว่ายน้ำ":     {floors:"1", area:"600", bed:"0", bath:"2", parking:"6", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาเพิงหมาแหงน (Shed Roof)", atmos:"แสงแดดส่องตรง", program:"สระว่ายน้ำ: สระหลัก, ขอบสระ, ห้องเปลี่ยนเสื้อผ้า, ห้องน้ำ, พื้นที่พักผ่อน", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"เมทัลชีท"},
+  "ฟิตเนส":         {floors:"1", area:"400", bed:"0", bath:"2", parking:"6", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"ฟิตเนส: พื้นที่ออกกำลังกายเปิดโล่ง, กระจกผนัง, ห้องเปลี่ยนเสื้อผ้า, ห้องน้ำ", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"พื้นคอนกรีต"},
+  "สปา":            {floors:"1", area:"300", bed:"0", bath:"2", parking:"4", style:"บาหลี (Balinese)", roof:"หลังคาปั้นหยา (Hip Roof)", atmos:"แสงรำไรผ่านต้นไม้", program:"สปา: ห้องนวด/ทรีตเมนต์, ห้องรับรอง, สวนน้ำเซน, ห้องอบไอน้ำ", extTone:"โทนดิน: ครีม น้ำตาลอ่อน", intTone:"ร่วมสมัยเขตร้อน", wallMat:"ผนังหินธรรมชาติ", floorMat:"พื้นทรายล้าง", roofMat:"กระเบื้องซีแพค"},
+  "ร้านเสริมสวย":   {floors:"1", area:"80",  bed:"0", bath:"1", parking:"3", style:"มินิมอล (Minimalist)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงไฟยามค่ำคืน", program:"ร้านเสริมสวย: เก้าอี้ทำผม, กระจกแถว, เคาน์เตอร์ต้อนรับ, อ่างสระผม", extTone:"มินิมอล: ขาว ไม้ซีด ดำ", intTone:"มูจิเรียบง่าย", wallMat:"ผนังฉาบเรียบ", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"พื้นคอนกรีต"},
+  "ปั๊มน้ำมัน":     {floors:"1", area:"500", bed:"0", bath:"2", parking:"8", style:"โมเดิร์น (Modern)", roof:"หลังคาเพิงหมาแหงน (Shed Roof)", atmos:"แสงไฟยามค่ำคืน", program:"สถานีบริการน้ำมัน: หลังคาคลุมตู้จ่าย (canopy), ร้านสะดวกซื้อ, ห้องน้ำ, ลานจอด", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"เมทัลชีท"},
+  "ลานจอดรถ":       {floors:"1", area:"1000", bed:"0", bath:"0", parking:"10", style:"อินดัสเทรียล (Industrial)", roof:"หลังคาเรียบ (Flat Roof)", atmos:"แสงแดดส่องตรง", program:"ลานจอดรถระดับพื้น: ช่องจอดตีเส้น, ทางสัญจร, ป้อมยาม", extTone:"อินดัสเทรียล: ดำด้าน เหล็ก สนิมดำ", intTone:"อินดัสเทรียล", wallMat:"ผนังโลหะ", floorMat:"คอนกรีตขัดมัน", roofMat:"พื้นคอนกรีต"},
+  "สถานีขนส่ง":     {floors:"2", area:"4000", bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาโค้ง (Barrel Roof)", atmos:"แสงแดดส่องตรง", program:"สถานีขนส่ง: ชานชาลารถโดยสาร, โถงผู้โดยสาร, ช่องจำหน่ายตั๋ว, หลังคาคลุมกว้าง", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"เมทัลชีท"},
+  "สนามบิน":        {floors:"2", area:"20000",bed:"0", bath:"0", parking:"10", style:"โมเดิร์น (Modern)", roof:"หลังคาโค้ง (Barrel Roof)", atmos:"แสงไฟยามค่ำคืน", program:"อาคารผู้โดยสารสนามบิน: โถงเช็คอิน, ประตูขึ้นเครื่อง, หลังคาเหล็กโค้งช่วงกว้าง, สายพานกระเป๋า", extTone:"โมเดิร์น: เทาอ่อน เทาเข้ม ดำ", intTone:"ทันสมัยสดใส", wallMat:"อิฐมวลเบา", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"เมทัลชีท"},
+  "ท่าเรือ":        {floors:"2", area:"3000", bed:"0", bath:"0", parking:"10", style:"คอนเทมโพรารี (Contemporary)", roof:"หลังคาเพิงหมาแหงน (Shed Roof)", atmos:"แสงทองยามเย็น", program:"ท่าเรือโดยสาร: ชานชาลาเทียบเรือ, โถงผู้โดยสาร, ช่องจำหน่ายตั๋ว, หลังคาคลุม", extTone:"กลาง: เทาอ่อน ขาว ไม้ระแนง", intTone:"ทันสมัยสดใส", wallMat:"ผนังแบบผสม", floorMat:"กระเบื้องพอร์ซเลน", roofMat:"เมทัลชีท"},
+  "สถานีรถไฟ":      {floors:"2", area:"4000", bed:"0", bath:"0", parking:"10", style:"นีโอคลาสสิก (Neoclassical)", roof:"หลังคาโค้ง (Barrel Roof)", atmos:"แสงทองยามเย็น", program:"สถานีรถไฟ: ชานชาลา, โถงกลางสูงโปร่ง, ช่องจำหน่ายตั๋ว, หลังคาเหล็กโค้ง", extTone:"หรูหรา: ขาว หินอ่อนสีเทา ทอง", intTone:"หรูหรา", wallMat:"ผนังฉาบเรียบ", floorMat:"หินอ่อน", roofMat:"เมทัลชีท"}
+};
+function applyBuildingDefaults(bt){
+  const d = buildingDefaults[bt];
+  if(!d) return;
+  const setIf = (id, v) => { const e = $(id); if(e && v != null){ e.value = v; } };
+  setIf("cbFloors", d.floors);
+  setIf("txtArea", d.area);
+  setIf("cbBedrooms", d.bed);
+  setIf("cbBathrooms", d.bath);
+  setIf("cbParking", d.parking);
+  setIf("cbStyle", d.style);
+  setIf("cbRoofStyle", d.roof);
+  setIf("cbAtmosphere", d.atmos);
+  const notes = $("txtNotes");
+  if(notes) notes.value = d.program || "";
+
+  /* ---- วัสดุ + โทนสี (แท็บวัสดุ/สถาปัตย์) ---- */
+  setIf("cbExtTone", d.extTone);
+  setIf("cbIntTone", d.intTone);
+  setIf("cbWallMaterial", d.wallMat);
+  setIf("cbInteriorWallMaterial", d.wallMat);
+  setIf("cbFloorMaterial", d.floorMat);
+  setIf("cbRoofMaterial", d.roofMat);
+
+  /* ---- ภายใน (แท็บ interior): อนุมานจากสไตล์อาคาร ---- */
+  const ds = styleToInterior(d.style);
+  setIf("kitchenStyle", ds.interior);
+  setIf("bedroomStyle", ds.bedroom);
+  setIf("bathroomStyle", ds.bathroom);
+  setIf("livingStyle", ds.living);
+
+  /* ---- ค่าตามหมวดอาคาร: ไฟ/ประปา/สุขภัณฑ์/ฝ้า/ภูมิทัศน์/โครงสร้าง ---- */
+  const cat = buildingCategory[bt] || "res";
+  const c = categoryDefaults[cat] || categoryDefaults.res;
+  // ระบบ/MEP
+  setIf("cbPhase", c.phase);
+  setIf("cbPipe", c.pipe);
+  setIf("cbSeptic", c.septic);
+  setIf("cbWaterTank", c.waterTank);
+  setIf("cbKitchenType", c.kitchenType);
+  setIf("cbCountertop", c.countertop);
+  setIf("cbToiletStyle", c.toilet);
+  setIf("cbSanitaryBrand", c.sanitary);
+  setIf("cbAddons", c.addons);
+  // ฝ้า/ไฟ (แท็บ lighting)
+  setIf("generalCeilingType", c.ceiling);
+  setIf("ceilingColor", c.ceilingColor);
+  setIf("mainLightType", c.light);
+  // ภูมิทัศน์ (แท็บ landscape)
+  setIf("landscapeGarden", c.garden);
+  setIf("landscapeWalkway", c.walkway);
+  setIf("landscapeLawn", c.lawn);
+  setIf("landscapeWater", c.water);
+  setIf("landscapeSeating", c.seating);
+  setIf("landscapeSurface", c.surface);
+  // โครงสร้าง (เสาเข็ม) — แท็บสถาปัตย์
+  setIf("cbPiling", c.piling);
+  // วัสดุห้องน้ำ/ครัว (แท็บสถาปัตย์) — ให้สอดคล้องวัสดุหลัก
+  setIf("cbBathFloorMaterial", "กระเบื้องพอร์ซเลน");
+  setIf("cbBathWallMaterial", "กระเบื้องพอร์ซเลน");
+  setIf("cbKitchenFloorMaterial", "กระเบื้องพอร์ซเลน");
+  setIf("cbKitchenWallMaterial", "กระเบื้องพอร์ซเลน");
+  setIf("cbCeilingMaterial", c.ceiling);
+  // ขนาดห้องนอน/น้ำ — ตั้งเมื่อเป็นที่พักอาศัยเท่านั้น (อาคารอื่นไม่เกี่ยว)
+  if(cat === "res"){
+    setIf("cbMasterBedSize", "4.00x4.00 ม.");
+    setIf("cbBedSize", "3.50x4.00 ม.");
+    setIf("cbMasterBathSize", "2.50x3.50 ม.");
+    setIf("cbBathSize", "1.80x2.40 ม.");
+  }
+
+  updateDrawingTypes();   // floors may have changed → rebuild sheet list
+  syncMaterialBoard();
+}
+/* แปลงสไตล์สถาปัตย์ → สไตล์ห้องภายในที่มีอยู่ใน dropdown แต่ละช่อง */
+function styleToInterior(archStyle){
+  const s = (archStyle || "").toLowerCase();
+  let key = "โมเดิร์น";
+  if(s.includes("loft") || s.includes("ลอฟท์")) key = "ลอฟท์";
+  else if(s.includes("minimal") || s.includes("มินิมอล")) key = "มินิมอล";
+  else if(s.includes("nordic") || s.includes("scandi") || s.includes("นอร์ดิก")) key = "นอร์ดิก";
+  else if(s.includes("industrial") || s.includes("อินดัสเทรียล")) key = "อินดัสเทรียล";
+  else if(s.includes("japanese") || s.includes("ญี่ปุ่น")) key = "ญี่ปุ่น";
+  else if(s.includes("bali") || s.includes("บาหลี") || s.includes("tropical") || s.includes("ทรอปิคอล")) key = "บาหลี";
+  else if(s.includes("thai") || s.includes("ไทย")) key = "ไทยประยุกต์";
+  else if(s.includes("classic") || s.includes("victorian") || s.includes("baroque") || s.includes("gothic") || s.includes("renaissance") || s.includes("neoclass") || s.includes("คลาสสิก") || s.includes("โกธิค")) key = "คลาสสิค";
+  else if(s.includes("contemporary") || s.includes("คอนเทมโพรารี")) key = "ร่วมสมัย";
+  // ช่องแต่ละห้องมีตัวเลือกไม่เท่ากัน → fallback ให้ค่าที่มีจริง
+  const pick = (k, fallback) => k;
+  return {
+    interior: ["โมเดิร์น","มินิมอล","นอร์ดิก","อินดัสเทรียล","ญี่ปุ่น","บาหลี","ไทยประยุกต์"].includes(key) ? key : "โมเดิร์น",
+    bedroom:  ["โมเดิร์น","มินิมอล","นอร์ดิก","วินเทจ","อินดัสเทรียล","ญี่ปุ่น","บาหลี","คลาสสิค","ลอฟท์"].includes(key) ? key : "โมเดิร์น",
+    bathroom: ["โมเดิร์น","มินิมอล","นอร์ดิก","ลอฟท์","ญี่ปุ่น","บาหลี","สปา","คลาสสิค","อินดัสเทรียล","ไทยประยุกต์"].includes(key) ? key : "โมเดิร์น",
+    living:   ["โมเดิร์น","มินิมอล","นอร์ดิก","ร่วมสมัย","อินดัสเทรียล","ญี่ปุ่น","บาหลี","คลาสสิค","วินเทจ","ไทยประยุกต์","ลอฟท์","สแกนดิเนเวียน"].includes(key) ? key : "โมเดิร์น"
+  };
+}
+const masterBedSizes = ["3.00x3.00 ม.","3.50x3.50 ม.","4.00x4.00 ม.","4.50x4.50 ม.","4.00x5.00 ม.","5.00x5.00 ม.","5.00x6.00 ม.","6.00x6.00 ม."];
+const bedSizes = ["3.00x3.00 ม.","3.00x3.50 ม.","3.50x4.00 ม.","4.00x4.00 ม."];
+const masterBathSizes = ["2.00x2.50 ม.","2.00x3.00 ม.","2.50x3.50 ม.","3.00x4.00 ม."];
+const bathSizes = ["1.50x2.00 ม.","1.50x2.50 ม.","1.80x2.40 ม.","2.00x2.50 ม."];
+
+const wallMaterials = ["อิฐมวลเบา","อิฐคอนกรีตบล็อก","อิฐแดง","กระจกบาน","ผนังแบบผสม","อิฐหินธรรมชาติ","ผนังฉาบเรียบ","แผ่นซีเมนต์ไฟเบอร์","ผนังหินธรรมชาติ","ผนังไม้ระแนง","ผนังโลหะ","ไม้จริง","ไม้เทียม","ไม้เทียมลายไม้","ไม้เทียมสีขาว","ไม้เทียมสีเทา","ไม้สัก","ไม้เต็ง","ไม้ประดู่"];
+const ceilingMaterials = ["ยิปซั่มเรียบ","ยิปซั่มลอน","ไม้จริง","ไม้เทียม","ไม้เทียมลายไม้","ไม้เทียมสีขาว","อลูมิเนียม","PVC","ไฟเบอร์ซีเมนต์","แผ่นเรียบสีขาว","ไม้เทียมกันความชื้น","ไม้สัก","ฝ้าลายไทย","ฝ้าลายดอกพุด"];
+const floorMaterials = ["กระเบื้องเซรามิก","กระเบื้องพอร์ซเลน","พื้นยาง SPC","พื้นขัดมัน","ไม้ปาร์เก้","ไม้จริง","ไม้เทียม","หินอ่อน","พื้นทรายล้าง","พื้นยูรีเทน","พื้นยาง","พื้นไม้เทียมลายไม้","พื้นไม้เทียมกันน้ำ","พื้นไม้สัก","พื้นไม้ตะเคียน","กระเบื้องไม้","หินแกรนิต","คอนกรีตขัดมัน"];
+const roofMaterials = ["เมทัลชีท","กระเบื้องดินเผา","กระเบื้องซีแพค","แอสฟัลต์ชิงเกิล","พื้นคอนกรีต","กระเบื้องโพลีคาร์บอเนต","กระเบื้องไม้สังเคราะห์","กระเบื้องดินเผาทรงไทย","กระเบื้องไม้สังเคราะห์ทรงไทย","ไม้เทียมมุงหลังคา","กระเบื้องไม้เทียม","กระเบื้องว่าว","กระเบื้องเกล็ดเต่า","สังกะสี","ใยหิน"];
+const bathFloors = ["กระเบื้องเซรามิกกันลื่น","กระเบื้องพอร์ซเลน","หินอ่อน","พื้นไม้เทียมกันน้ำ","พื้นยางกันน้ำ","กระเบื้องยาง","ไม้เทียมลายหิน"];
+const bathCeilings = ["ยิปซั่มกันความชื้น","PVC","อลูมิเนียม","ไม้เทียมกันความชื้น","แผ่นเรียบสีขาว","ไม้เทียม"];
+const bathWalls = ["กระเบื้องเซรามิก","กระเบื้องพอร์ซเลน","หินอ่อน","แผ่นพีวีซี","ไม้เทียมกันน้ำ","กระจก","หินเทียม","กระเบื้องโมเสค"];
+const kitchenFloors = ["กระเบื้องเซรามิก","กระเบื้องพอร์ซเลน","พื้นยาง","พื้นไม้เทียมกันน้ำ","หินอ่อน","หินแกรนิต","ไม้เทียม"];
+const kitchenWalls = ["กระเบื้องเซรามิก","กระเบื้องพอร์ซเลน","กระจก","สแตนเลส","ไม้เทียม","แผ่นอะคริลิค","หินเทียม"];
+const stairMaterials = ["คอนกรีตเสริมเหล็กปูหินอ่อน","โครงสร้างเหล็กงาดำไม้จริง","บันไดคอนกรีตลอย","คอนกรีตเสริมเหล็กปูกระเบื้อง","ไม้จริงทั้งบันได","ไม้เทียมทั้งบันได","ไม้เทียมลายไม้","เหล็กผสมไม้เทียม","บันไดไม้สัก","บันไดไม้ตะเคียน"];
+
+const phases = ["1 เฟส","3 เฟส"];
+const pipes = ["พีวีซี ชั้น 8.5","พีอี","พีวีซี ชั้น 13.5","พีอี-เอ็กซ์","ทองแดง","ท่อเหล็กดำ"];
+const septics = ["ถังบำบัด 1,000 ลิตร","ถังบำบัด 1,600 ลิตร","ถังบำบัด 2,000 ลิตร","ถังบำบัด 3,000 ลิตร","ถังบำบัด 5,000 ลิตร","ระบบบำบัดน้ำเสียรวม"];
+const waterTanks = ["ถังไฟเบอร์กลาส 1,000 ลิตร","ถังไฟเบอร์กลาส 2,000 ลิตร","ถังสแตนเลส 2,000 ลิตร","ถังคอนกรีต 2,000 ลิตร","ถังสแตนเลส 3,000 ลิตร","ถังสแตนเลส 5,000 ลิตร"];
+const kitchenTypes = ["ครัวไทย","ครัวชมพู่","ครัวรูปตัวแอล","ครัวเกาะกลาง","ครัวอิตาลี","ครัวโมดูลาร์","ครัวปิด","ครัวเปิด"];
+const countertops = ["หินอ่อน","หินแกรนิต","หินควอทซ์","ไม้สังเคราะห์","สแตนเลส","ยูรีเทน","ไม้จริง","คอนกรีตขัดมัน","ไม้เทียม","หินเทียม","ไม้เทียมลายหิน"];
+const toiletStyles = ["โมเดิร์นลอฟท์","มินิมอลขาว","หินอ่อนหรูหรา","เซน","อินดัสเทรียล","สแกนดิเนเวียน","ญี่ปุ่น","ไทยโมเดิร์น","ไทยประยุกต์"];
+const sanitaryBrands = ["อเมริกันสแตนดาร์ด","คอตโต้","โตโต้","โคห์เลอร์","ฮาเฟเล่","โกรเฮ","ฮานส์โกรเฮ","ยางพารา","เซรามิกไทย","แอมเนสตี้"];
+const addons = ["ไม่มี","ระบบโซลาร์เซลล์","ระบบสมาร์ทโฮม","รั้วบ้าน","สระว่ายน้ำ","สวนและภูมิทัศน์","ดาดฟ้า","ลิฟต์ส่วนตัว","โรงจอดรถ","ห้องพักคนงาน","ห้องซักล้าง","ระบบดูดฝุ่นส่วนกลาง","ระบบกล้องวงจรปิด"];
+const quantities = ["1","2","3","4","5","6","7","8","9","10"];
+const boqFormats = ["ตารางรายละเอียด","สรุปหมวดหมู่","ประมาณการราคากลาง","รูปแบบเอกสาร","แยกตามประเภทงาน"];
+const priceBases = ["ราคากลางปี 2569","ราคาผู้รับเหมา","ราคาประมาณการวิศวกร","ราคาตามท้องตลาด","ราคาวัสดุจริง"];
+const laborRates = ["รวมค่าแรง","ไม่รวมค่าแรง","ส่วนแบ่งค่าแรง 30% ของค่าวัสดุ","ส่วนแบ่งค่าแรงตามวัสดุ","คิดค่าแรงรายวัน"];
+const scales = ["1:50","1:75","1:100","1:125","1:150","1:200","1:250","1:300","1:400","1:500"];
+const pilingList = ["ไม่มีเข็ม","เสาเข็มไอ ไอ-18 ยาว 12 ม.","เสาเข็มไอ ไอ-22 ยาว 21 ม.","เสาเข็มไอ ไอ-26 ยาว 21 ม.","เสาเข็มไอ ไอ-30 ยาว 24 ม.","เสาเข็มสี่เหลี่ยม เอส-18 ยาว 12 ม.","เสาเข็มสี่เหลี่ยม เอส-22 ยาว 21 ม.","เสาเข็มสี่เหลี่ยม เอส-26 ยาว 21 ม.","เสาเข็มสี่เหลี่ยม เอส-30 ยาว 24 ม.","เสาเข็มกลมกลวง ขนาด 30 ซม.","เสาเข็มกลมกลวง ขนาด 40 ซม.","เสาเข็มเจาะ ขนาด 35 ซม.","เสาเข็มเจาะ ขนาด 50 ซม.","ไมโครไพล์ ขนาด 20 ซม.","เข็มไม้","เข็มไม้ไผ่"];
+const asBuiltRigids = ["ยึดรูปแบบเดิม 100% ไม่เปลี่ยนแปลง","ปรับผนังเล็กน้อยแต่คงส่วนร่วม","ใช้โครงสร้างเดิมเป็นแนวทาง"];
+const siteContexts = ["สวนเรียบทางเดินเท้า","สภาพแวดล้อมในเมือง","สวนเขตร้อน","พื้นคอนกรีตที่จอดรถโมเดิร์น","สภาพแวดล้อมชนบท","ริมน้ำ","ป่าเขา","ชายทะเล"];
+const asBuiltFixes = ["คงรูปแบบเดิม","ปรับปรุงภายนอกวัสดุใหม่","เปลี่ยนวัสดุมุงหลังคา","เปลี่ยนผนังทั้งหมดเป็นกระจก","รื้อสิ่งกีดขวาง","เพิ่มชั้น","ต่อเติม"];
+const asBuiltNotesList = ["คงเดิม","ปรับโทนสีขาวเทา เพิ่มแสงรำไร","เน้นโมเดิร์นลอฟท์ ดำผสมไม้","เพิ่มทางเดินเท้า ปรับสวนนอร์ดิก","ปรับเป็นทรงไทย"];
+
+const interiorStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","อินดัสเทรียล","ญี่ปุ่น","บาหลี","ไทยประยุกต์"];
+const kitchenLayouts = ["รูปตัวแอล (L-Shape)","รูปตัวยู (U-Shape)","เกาะกลาง (Island)","ขนาน (Galley)","หนึ่งแถว (Single Wall)"];
+const cabinetMaterials = ["ไม้จริง","ไม้เทียม (HDF)","ไม้อัด","ลามิเนต","อะคริลิค","ไม้สัก","ไม้โอ๊ค"];
+const backsplashMaterials = ["กระเบื้องเซรามิก","กระเบื้องโมเสค","กระจก","สแตนเลส","หินอ่อน","หินเทียม","ไม้","กระเบื้องลวดลาย","อิฐเปลือย"];
+const kitchenColors = ["ขาว","เทา","ดำ","ครีม","น้ำตาล","ไม้ธรรมชาติ","เขียวอ่อน","ฟ้าอ่อน"];
+const bedroomStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","วินเทจ","อินดัสเทรียล","ญี่ปุ่น","บาหลี","คลาสสิค","ลอฟท์"];
+const bedroomTypes = ["ห้องนอนหลัก (Master Bedroom)","ห้องนอนรอง (Guest Bedroom)","ห้องเด็ก (Kids Bedroom)","ห้องนอนรวม (Dormitory)"];
+const bedroomFloors = ["ไม้ปาร์เก้","พรม","กระเบื้อง","พื้นยาง","พื้นไม้เทียม","ไม้จริง","พื้นไม้สัก"];
+const bedroomWallColors = ["ขาว","เทาอ่อน","เบจ","ครีม","ฟ้าอ่อน","เขียวอ่อน","ชมพูอ่อน","เทาเข้ม","น้ำตาล","ไม้"];
+const bedStyles = ["เตียงไม้","เตียงหุ้มเบาะ","เตียงลอย (Floating)","เตียงสูง (Loft Bed)","เตียงพื้น (Platform Bed)","เตียงสี่โพสเตอร์","เตียงโมเดิร์น","เตียงมินิมอล","เตียงนอร์ดิก","เตียงญี่ปุ่น","เตียงทรงไทย"];
+const bedroomStorages = ["ตู้เสื้อผ้าบานเปิด","ตู้เสื้อผ้าบานเลื่อน","ตู้เสื้อผ้าบิวท์อิน","ชั้นวางของเปิด","ลิ้นชักใต้เตียง","ระบบจัดเก็บอัจฉริยะ","Walk-in Closet"];
+const bathroomStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","ลอฟท์","ญี่ปุ่น","บาหลี","สปา","คลาสสิค","อินดัสเทรียล","ไทยประยุกต์"];
+const bathroomTypes = ["ห้องน้ำหลัก (Master Bathroom)","ห้องน้ำรวม (Shared Bathroom)","ห้องน้ำเล็ก (Powder Room)","ห้องน้ำในตัว (Ensuite Bathroom)"];
+const bathroomFloors = ["กระเบื้องเซรามิกกันลื่น","กระเบื้องพอร์ซเลน","หินอ่อน","กระเบื้องยาง","พื้นไม้เทียมกันน้ำ","พื้นยางกันน้ำ","กระเบื้องโมเสค"];
+const bathroomWalls = ["กระเบื้องเซรามิก","กระเบื้องพอร์ซเลน","หินอ่อน","กระเบื้องโมเสค","กระจก","แผ่นพีวีซี","ไม้เทียมกันน้ำ","ปูนเปลือย","วอลล์เปเปอร์กันน้ำ","อิฐเปลือยเคลือบ"];
+const showerTypes = ["ฝักบัวแบบติดผนัง","ฝักบัวแบบฝังฝ้า (Rain Shower)","ฝักบัวแบบมือถือ","ฝักบัวคู่","ฝักบัวพร้อมนวดน้ำ","อ่างอาบน้ำ"];
+const bathroomSanitary = ["Cotto","TOTO","American Standard","Kohler","Grohe","HAFELE"];
+const livingStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","ร่วมสมัย","อินดัสเทรียล","ญี่ปุ่น","บาหลี","คลาสสิค","วินเทจ","ไทยประยุกต์","ลอฟท์","สแกนดิเนเวียน"];
+const livingFloors = ["ไม้ปาร์เก้","กระเบื้อง","หินอ่อน","พรม","พื้นไม้เทียม","คอนกรีตขัดมัน","พื้นยาง","ไม้จริง"];
+const livingWallColors = ["ขาว","เทา","เบจ","ครีม","น้ำตาล","เขียว","ฟ้า","เทาเข้ม","ดำ","ไม้"];
+const sofaStyles = ["โซฟาแบบแอล (L-Shape)","โซฟาแบบตรง (Straight)","โซฟาแบบโมดูลาร์","โซฟาแบบนวม","โซฟาไม้","โซฟาเชอร์สเตอร์","โซฟาแขวน","โซฟาเตียง"];
+const coffeeTableStyles = ["โต๊ะกระจก","โต๊ะไม้","โต๊ะหินอ่อน","โต๊ะโลหะ","โต๊ะกระจก-ไม้","โต๊ะมินิมอล","โต๊ะนอร์ดิก","โต๊ะอินดัสเทรียล","โต๊ะโมเดิร์น"];
+const officeStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","อินดัสเทรียล","ร่วมสมัย","คลาสสิค","วินเทจ","ญี่ปุ่น"];
+const officeFloors = ["ไม้ปาร์เก้","พรม","กระเบื้อง","พื้นยาง","ไม้เทียม","คอนกรีตขัดมัน","พื้นไวนิล"];
+const officeWallColors = ["ขาว","เทา","เบจ","ครีม","เขียว","ฟ้า","เทาเข้ม","ดำ","ไม้"];
+const deskStyles = ["โต๊ะไม้","โต๊ะเหล็ก","โต๊ะกระจก","โต๊ะปรับระดับ","โต๊ะโมเดิร์น","โต๊ะมินิมอล","โต๊ะทรงตัวแอล","โต๊ะทรงตรง"];
+const officeStorages = ["ตู้เอกสาร","ชั้นวางหนังสือ","ตู้เก็บของบิลท์อิน","ลิ้นชักเคลื่อนที่","ชั้นวางแบบเปิด"];
+const kidsStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","วินเทจ","แฟนตาซี","สัตว์น้อย","อวกาศ","เจ้าหญิง","ซุปเปอร์ฮีโร่","ธรรมชาติ"];
+const laundryStyles = ["โมเดิร์น","มินิมอล","นอร์ดิก","อินดัสเทรียล","ร่วมสมัย","ไทย","ญี่ปุ่น","คลาสสิค","ฟังก์ชั่นแนล"];
+const storageStyles = ["ชั้นวางเปิด","ตู้ปิด","ชั้นวางเหล็ก","ชั้นวางไม้","ระบบจัดเก็บอัจฉริยะ","บิลท์อิน","โมดูลาร์"];
+const multiPurposeStyles = ["อเนกประสงค์","นั่งเล่น","ทำงาน","ออกกำลังกาย","เล่นดนตรี","อ่านหนังสือ","เล่นเกมส์","จัดเลี้ยง","พักผ่อน","โฮมเธียเตอร์"];
+
+const ceilingTypes = ["ยิปซั่มเรียบ","ยิปซั่มลอน","ไม้จริง","ไม้เทียม","อลูมิเนียม","PVC","ฝ้าลายไทย","ฝ้าดรอป","ฝ้าเว้า","ฝ้าทราย"];
+const ceilingPatterns = ["เรียบ","ลายเส้น","ลายตาราง","ลายไม้","ลายไทย","ไม่มีลวดลาย","ลายคลื่น","ลายเรขาคณิต"];
+const ceilingColors = ["ขาว","ครีม","เทาอ่อน","เบจ","ขาวนวล","ขาวบริสุทธิ์","สีไม้","น้ำตาลอ่อน","เทา","ครีมอ่อน"];
+const lightTypesList = ["ดาวน์ไลท์","สปอตไลท์","แถบ LED","โคมแขวน","โคมระย้า","โคมติดเพดาน","รางไฟ","โคมไฟซ่อนฝ้า","โคมไฟตั้งพื้น","โคมไฟติดผนัง"];
+const colorTemps = ["2700K (อบอุ่น)","3000K (ขาวนวล)","4000K (ขาวธรรมชาติ)","5000K (ขาววัน)","6500K (ขาวเย็น)","ปรับได้ (Tunable White)"];
+const lumensList = ["800 lm (ห้องเล็ก)","1200 lm (ห้องกลาง)","1600 lm (ห้องใหญ่)","2400 lm (พื้นที่เปิด)","3200 lm (พื้นที่กว้าง)","ปรับได้"];
+const lightControls = ["สวิตซ์ธรรมดา","สวิตซ์ 2 ทาง","หรี่ไฟได้ (Dimmer)","Smart Control","Voice Control","เซ็นเซอร์อัตโนมัติ"];
+const taskLightTypes = ["ไฟสปอตไลท์","แถบ LED","ไฟใต้ตู้","ไฟดาวน์ไลท์","ไฟราง","โคมไฟตั้งโต๊ะ"];
+const accentLightTypes = ["ไฟสปอตไลท์","แถบ LED","โคมไฟผนัง","โคมไฟตั้งพื้น","ไฟซ่อนฝ้า","โคมไฟศิลปะ"];
+
+const landscapeGardens = ["ไม่มี","สวนหย่อม","สวนแนวดิ่ง","สวนหิน","สวนญี่ปุ่น","สวนบาหลี","สวนทะเลทราย","สวนเขตร้อน","สวนอังกฤษ","สวนฝรั่งเศส"];
+const landscapeWalkways = ["ไม่มี","ทางเดินคอนกรีต","ทางเดินหิน","ทางเดินไม้","ทางเดินกรวด","ทางเดินอิฐ","ทางเดินกระเบื้อง"];
+const landscapeLawns = ["ไม่มี","สนามหญ้าจริง","สนามหญ้าเทียม","สนามหญ้าผสมไม้ดอก","สนามหญ้ารูปทรง"];
+const landscapeWaters = ["ไม่มี","สระน้ำธรรมชาติ","สระว่ายน้ำ","สระว่ายน้ำเกลือ","สระว่ายน้ำอินฟินิตี้","บ่อปลาคราฟ","น้ำตกเทียม","บ่อบัว","น้ำพุ"];
+const landscapeSeatings = ["ไม่มี","ลานปูหิน","ลานไม้","ศาลา","เก้าอี้สวน","โต๊ะกลางแจ้ง","ชุดเฟอร์นิเจอร์สวน","เปลญวน"];
+const landscapeDecors = ["ไม่มี","โคมไฟสวน","ประติมากรรม","ตุ๊กตาสวน","กระถางต้นไม้","รั้วไม้","ซุ้มไม้เลื้อย","ม้านั่งสวน"];
+const landscapeSurfaces = ["ไม่มี","หินเกล็ด","หินกาบ","ไม้ระแนง","กรวด","ซีเมนต์ลายไม้","อิฐมอญ","กระเบื้องภายนอก"];
+
+const renderQualitySettings = {
+  ultra:{name:"Ultra Realistic",keywords:"8K, photorealistic, ray tracing, global illumination, Unreal Engine 5, V-Ray",stylize:300},
+  high:{name:"High Quality",keywords:"4K, photorealistic, architectural rendering, V-Ray, Corona Render",stylize:250},
+  standard:{name:"Standard",keywords:"high quality, detailed, realistic",stylize:200},
+  draft:{name:"Draft",keywords:"sketch, concept, draft, quick render",stylize:100}
+};
+
+/* =================== State =================== */
+let globalSeed = "";
+let base3DModelCreated = false;
+let projectDatabase = [];
+const DB_KEY = "ongart_futuro_db_v62";
+
+const displayCheckboxIds = ["showDimensions","showRoomLabels","showDoorSymbols","showStairArrows","showNorthArrow","showScaleBar","showMaterialBoard","showMaterialSwatch","showMaterialLabels","showFurniture","showAppliances","showPlants","showLandscape","showWaterFeatures","showWalkways"];
+
+/* =================== Helpers =================== */
+const $ = id => document.getElementById(id);
+const val = id => { const e = $(id); return e ? e.value : ""; };
+const dash = id => { const v = val(id).trim(); return v === "" ? "—" : v; };
+const checked = id => { const e = $(id); return e ? e.checked : false; };
+
+function populateSelect(id, items, defaultIndex = 0){
+  const sel = $(id); if(!sel) return;
+  sel.innerHTML = "";
+  items.forEach(it => {
+    const o = document.createElement("option");
+    o.value = it; o.textContent = it; sel.appendChild(o);
+  });
+  if(defaultIndex >= 0 && defaultIndex < items.length) sel.selectedIndex = defaultIndex;
+}
+function generateRandomSeed(){ return Math.floor(1000000 + Math.random()*9000000).toString(); }
+
+function toast(msg, type = "success"){
+  const d = document.createElement("div");
+  d.className = "toast";
+  d.style.background = type === "error" ? "var(--danger)" : (type === "info" ? "var(--blue)" : "var(--accent)");
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+async function copyToClipboard(text){
+  try{ await navigator.clipboard.writeText(text); toast("📋 คัดลอกคำสั่งเรียบร้อย"); }
+  catch{
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("📋 คัดลอกคำสั่งเรียบร้อย"); }
+    catch{ toast("คัดลอกไม่สำเร็จ","error"); }
+    document.body.removeChild(ta);
+  }
+}
+
+/* =================== Stilt house =================== */
+const isStiltHouse = () => checked("chkStiltHouse");
+function updateStiltPreview(){
+  if(!isStiltHouse()) return;
+  const h = parseFloat(val("txtStiltHeight")) || 1.2;
+  const steps = Math.ceil(h / 0.18);
+  $("stairCalcBox").innerHTML = `💡 ความสูง ${h.toFixed(2)} ม. = ${steps} ขั้น`;
+  const p = $("stiltPreviewContent");
+  if(p) p.innerHTML = `📏 ${h} ม. (${steps} ขั้น)<br>🏗️ ${val("cbUnderHouseType")}<br>🧱 ${val("cbUnderWallType")}<br>🪜 บันได${val("cbStairLocation")} · ${val("cbStairMaterialStilt")}<br>💨 ${val("cbUnderVentilation")}`;
+}
+function toggleStiltSection(){
+  const s = $("stiltHouseSection");
+  if(s) s.style.display = isStiltHouse() ? "block" : "none";
+  if(isStiltHouse()) updateStiltPreview();
+  generatePrompt();
+}
+function getStiltDetailsEnglish(){
+  if(!isStiltHouse()) return "";
+  const h = parseFloat(val("txtStiltHeight")) || 1.2;
+  const unitEng = val("cbStiltHeightUnit") === "เมตร" ? "m" : "cm";
+  const steps = Math.ceil(h / 0.18);
+  return `Stilt House: Height ${h} ${unitEng} (${steps} steps) | Underside: ${val("cbUnderHouseType")} | Wall: ${val("cbUnderWallType")} | Stair: ${val("cbStairLocation")} ${val("cbStairMaterialStilt")}`;
+}
+
+/* =================== Type detection =================== */
+function getImageMode(){
+  const r = document.querySelector('input[name="imageMode"]:checked');
+  const single = r ? r.value === "single" : true;
+  const w = $("multiImageWarning");
+  if(w) w.style.display = single ? "none" : "block";
+  return single;
+}
+function is3DType(t){ return t.includes("3D") || t.includes("Render") || t.includes("Presentation Board"); }
+function isBOQType(t){ return t.includes("BOQ"); }
+function buildBOQPrompt(){
+  let scope = [];
+  if(checked("chkStruct")) scope.push("งานโครงสร้าง (Structure)");
+  if(checked("chkArch")) scope.push("งานสถาปัตยกรรม (Architecture)");
+  if(checked("chkElec")) scope.push("งานไฟฟ้า (Electrical)");
+  if(checked("chkSanitary")) scope.push("งานสุขาภิบาล (Sanitary)");
+  if(checked("chkInterior")) scope.push("งานตกแต่งภายใน (Interior)");
+  if(!scope.length) scope.push("งานทั้งหมด (All works)");
+  return `BILL OF QUANTITIES (BOQ) — TABLE / SPREADSHEET ONLY
+========================================
+⚠️ CREATE A DOCUMENT TABLE ONLY. ABSOLUTELY NO 3D HOUSE, NO PERSPECTIVE, NO BUILDING ILLUSTRATION, NO RENDERED IMAGE.
+Output = a clean professional cost-estimate spreadsheet/table on a white sheet, like an Excel printout.
+
+DRAWING TYPE: ${val("cbType")}
+Sheet: ${val("txtSheetNo")} | Drawing: ${val("txtDrgNo")}
+
+PROJECT: ${val("txtProject")} | Owner: ${val("txtOwner")}
+Building: ${val("cbBuildingType")} | Area: ${val("txtArea")} sq.m. | Floors: ${val("cbFloors")}
+
+BOQ FORMAT: ${val("cbBOQFormat")}
+PRICE BASIS: ${val("cbPriceBasis")}
+LABOR: ${val("cbLaborRate")}
+WASTAGE: ${val("txtWastage")}%
+
+WORK SCOPE (one section per item, grouped):
+- ${scope.join("\n- ")}
+
+TABLE COLUMNS (Thai headers):
+ลำดับ | รายการ | หน่วย | ปริมาณ | ราคาวัสดุ/หน่วย | ราคาค่าแรง/หน่วย | รวมวัสดุ | รวมค่าแรง | รวมทั้งสิ้น
+- Group rows by work section with subtotals per section.
+- Add grand total row, then Wastage ${val("txtWastage")}%, then final total.
+- Numbers in Thai Baht, comma-separated, 2 decimals.
+- Professional accounting layout, ruled gridlines, header row shaded, white background, black text. NO imagery.
+${getPriceReferenceForBOQ()}
+PROJECT TITLE BLOCK:
+โครงการ: ${dash("txtProject")}
+เจ้าของ: ${dash("txtOwner")}
+ผู้ออกแบบ: ${dash("txtDesigner")}
+วิศวกร: ${dash("txtEngineer")}
+สถาปนิก: ${dash("txtArchitect")}`;
+}
+function is2DType(t){
+  const a = t.includes("2D") || t.includes("แปลน") || t.includes("รูปด้าน") || t.includes("รูปตัด") || t.includes("ผังบริเวณ") || t.includes("แบบขยาย");
+  return a && !is3DType(t);
+}
+
+/* =================== Instruction blocks =================== */
+function block(title, lines){
+  const top = "╔" + "═".repeat(74) + "╗";
+  const bot = "╚" + "═".repeat(74) + "╝";
+  const sep = "╠" + "═".repeat(74) + "╣";
+  let out = "\n" + top + "\n  " + title + "\n" + sep + "\n";
+  lines.forEach(l => out += "  " + l + "\n");
+  return out + bot + "\n";
+}
+function getRenderStyleInstruction(){
+  const style = document.querySelector('input[name="renderStyle"]:checked').value;
+  const is3D = is3DType(val("cbType"));
+  const quality = val("cbRenderQuality");
+  if(style === "photorealistic_3d" && is3D){
+    return block("📸 3D PHOTOREALISTIC RENDER (ภาพสามมิติเสมือนจริง)", [
+      "Create a 3D image that looks like a real photograph.",
+      "Techniques: Ray Tracing, Global Illumination, PBR materials,",
+      "natural lighting with realistic shadows, depth of field,",
+      "ambient occlusion, " + (quality === "ultra" ? "8K" : "4K") + " resolution.",
+      "Goal: indistinguishable from a real camera shot."
+    ]);
+  }
+  if(style === "photorealistic_3d" && !is3D){
+    return block("🎨 2D COLOR RENDER (ภาพสองมิติเรนเดอร์สี)", [
+      "IMPORTANT: 2D FLAT orthographic drawing, NOT 3D perspective.",
+      "Use beautiful color rendering with clear materials & textures.",
+      "Show dimensions and construction symbols.",
+      "NO 3D perspective, NO shadows, NO 3D effects."
+    ]);
+  }
+  if(style === "technical_3d"){
+    return block("🔧 3D TECHNICAL MODE (สามมิติเทคนิค)", [
+      "3D isometric or perspective in engineering drawing style.",
+      "Visible construction lines and wireframe edges.",
+      "Technical annotations and dimensions.",
+      "Blueprint or limited color palette."
+    ]);
+  }
+  if(style === "color_2d"){
+    return block("🎨 2D COLOR RENDER (ภาพสองมิติเรนเดอร์สี)", [
+      "MUST be 2D orthographic projection, NOT 3D.",
+      "High-quality color rendering with textures and materials.",
+      "Professional line weights.",
+      "Dimensions, room labels, door/window symbols."
+    ]);
+  }
+  if(style === "technical_2d_bw"){
+    return block("⚫ 2D BLACK & WHITE TECHNICAL (สองมิติเทคนิคขาวดำ)", [
+      "2D orthographic projection (not 3D).",
+      "Black and white only (monochrome).",
+      "Professional line weights, hatch patterns for materials.",
+      "Dimensions and annotations."
+    ]);
+  }
+  return "";
+}
+function get2DInstruction(t){
+  if(!is2DType(t)) return "";
+  return block("📐 IMPORTANT: 2D ARCHITECTURAL DRAWING", [
+    "This is a 2D TECHNICAL DRAWING — NOT a 3D render.",
+    "Create a FLAT 2D drawing (orthographic projection).",
+    "NO 3D perspective, NO 3D effects, NO 3D shadows.",
+    "Standard 2D architectural conventions.",
+    "Show dimensions, room labels, door/window symbols."
+  ]);
+}
+function get3DFirstInstruction(t){
+  const isModel = t === "3D Render ภายนอก";
+  const refURL = val("txtRefURL").trim();
+  const hasBase = base3DModelCreated || refURL !== "";
+  if(isModel) return "🎯 3D FIRST APPROACH — STEP 1: Create Base 3D Model (master reference for all drawings)";
+  if(!hasBase) return '⚠️ WARNING: No Base 3D Model found. Create "3D Render ภายนอก" first.';
+  return "🔗 3D REFERENCE — Based on Base 3D Model (same proportions, materials, style)";
+}
+
+/* =================== Badges & hints =================== */
+function updateStyleBadge(){
+  const style = document.querySelector('input[name="renderStyle"]:checked').value;
+  const is3D = is3DType(val("cbType"));
+  const b = $("styleBadge"); if(!b) return;
+  if(style === "photorealistic_3d" && is3D){ b.innerHTML = "📸 3D Photorealistic"; b.className = "badge photo"; }
+  else if(style === "photorealistic_3d"){ b.innerHTML = "🎨 2D Color Render"; b.className = "badge color"; }
+  else if(style === "technical_3d"){ b.innerHTML = "🔧 3D Technical"; b.className = "badge tech"; }
+  else if(style === "color_2d"){ b.innerHTML = "🎨 2D Color Render"; b.className = "badge color"; }
+  else if(style === "technical_2d_bw"){ b.innerHTML = "⚫ 2D Technical B&W"; b.className = "badge blue"; }
+}
+function updateTypeBadge(){
+  const t = val("cbType");
+  const b = $("typeBadge"); if(!b) return;
+  if(is2DType(t)){ b.innerHTML = "📐 2D Drawing"; b.className = "badge blue"; }
+  else if(t.includes("Presentation Board")){ b.innerHTML = "📋 Presentation Board"; b.className = "badge cyan"; }
+  else { b.innerHTML = "🎨 3D Render"; b.className = "badge purple"; }
+}
+function updatePresentationHint(){
+  const h = $("presentationLayoutHint");
+  if(h) h.style.display = val("cbType").includes("Presentation Board") ? "block" : "none";
+}
+
+/* =================== Section builders =================== */
+function getFloorNum(){
+  const f = val("cbFloors");
+  if(f === "ชั้นครึ่ง") return 1;
+  const n = parseInt(f); return isNaN(n) ? 1 : n;
+}
+function getFloorPlansList(){
+  let t = "";
+  for(let i = 1; i <= getFloorNum(); i++) t += (i === 1 ? "- 1st Floor Plan (2D)\n" : `- ${i}th Floor Plan (2D)\n`);
+  return t;
+}
+function getMaterialBoardDetails(){
+  if(!checked("showMaterialBoard")) return "";
+  let t = "\n[MATERIAL BOARD]\n";
+  t += `- Exterior Wall: ${bili(val("cbWallMaterial"))}\n`;
+  t += `- Interior Wall: ${bili(val("cbInteriorWallMaterial") || val("cbWallMaterial"))}\n`;
+  t += `- Floor: ${bili(val("cbFloorMaterial"))}\n`;
+  t += `- Roof: ${bili(val("cbRoofMaterial"))}\n`;
+  t += `- Window/Door Frame: อะลูมิเนียม (Aluminium)\n`;
+  t += `- Main Exterior Color: ${bili(val("cbExtTone"))}\n`;
+  t += `- Main Interior Color: ${bili(val("cbIntTone"))}\n`;
+  t += `- Countertop Material: ${val("cbCountertop")}\n`;
+  t += `- Bathroom Material: ${val("cbBathWallMaterial")}\n`;
+  if(checked("showMaterialSwatch")) t += "- Include Material Swatch: Yes\n";
+  if(checked("showMaterialLabels")) t += "- Include Material Labels: Yes\n";
+  return t;
+}
+function getDisplayOptions(){
+  const map = {
+    showDimensions:"Show Dimensions", showRoomLabels:"Show Room Labels",
+    showDoorSymbols:"Show Door/Window Symbols", showStairArrows:"Show Stair Arrows",
+    showNorthArrow:"Show North Arrow", showScaleBar:"Show Scale Bar",
+    showMaterialBoard:"Show Material Board", showMaterialSwatch:"Show Material Swatch",
+    showMaterialLabels:"Show Material Labels", showFurniture:"Show Furniture",
+    showAppliances:"Show Appliances", showPlants:"Show Plants/Decor",
+    showLandscape:"Show Landscape", showWaterFeatures:"Show Water Features", showWalkways:"Show Walkways"
+  };
+  let t = "\n[DISPLAY OPTIONS]\n";
+  for(const id in map) t += `- ${map[id]}: ${checked(id) ? "Yes" : "No"}\n`;
+  return t;
+}
+function getLandscapeDetails(){
+  let t = "";
+  const pairs = [
+    ["landscapeGarden","Garden/Landscape"],["landscapeWalkway","Walkway/Path"],
+    ["landscapeLawn","Lawn"],["landscapeWater","Water Feature"],
+    ["landscapeSeating","Outdoor Seating"],["landscapeDecor","Exterior Decor"],
+    ["landscapeSurface","Exterior Surface"]
+  ];
+  pairs.forEach(([id,label]) => { const v = val(id); if(v && v !== "ไม่มี") t += `- ${label}: ${v}\n`; });
+  const flags = [["landscapeFence","Fence"],["landscapeGate","Gate"],["landscapeCarport","Carport"],["landscapeBbq","BBQ Area"],["landscapePlayground","Playground"],["landscapePetArea","Pet Area"]];
+  flags.forEach(([id,label]) => { if(checked(id)) t += `- ${label}: Yes\n`; });
+  return t;
+}
+/* ประเภทอาคารที่เป็น "ที่พักอาศัย" (มีห้องนอน/ครัว/นั่งเล่นจริง) */
+function isResidential(bt){
+  return ["บ้านพักอาศัย","บ้านแฝด","บ้านแถว","ทาวน์เฮาส์"].includes(bt);
+}
+function getInteriorDetails(){
+  const bt = val("cbBuildingType");
+  // อาคารที่ไม่ใช่ที่พักอาศัย → ไม่ใส่ห้องนอน/ครัวบ้าน แต่ใช้ "พื้นที่ใช้สอย" ตามโปรแกรมของอาคาร
+  if(!isResidential(bt)){
+    const d = buildingDefaults[bt] || {};
+    let t = `\n[INTERIOR PROGRAM — ${bili(bt)}]`;
+    t += `\n- Interior Style: ${bili(val("kitchenStyle"))}`;
+    t += `\n- Interior Tone: ${bili(val("cbIntTone"))}`;
+    t += `\n- Floor: ${bili(val("cbFloorMaterial"))}`;
+    t += `\n- Interior Wall: ${bili(val("cbInteriorWallMaterial"))}`;
+    t += `\n- Required spaces / zones: ${d.program || val("txtNotes") || "as appropriate for this building type"}`;
+    t += `\n- NOTE: Design interior ONLY for the functional spaces listed above. Do NOT add residential bedrooms, home kitchen, or home living room unless explicitly part of the program.`;
+    return t;
+  }
+  let t = "";
+  t += `\n[KITCHEN]\n- Style: ${val("kitchenStyle")}\n- Layout: ${val("kitchenLayout")}\n- Cabinet: ${val("kitchenCabinetMaterial")}\n- Cabinet Color: ${val("kitchenCabinetColor")}\n- Countertop: ${val("kitchenCountertop")}\n- Backsplash: ${val("kitchenBacksplash")}`;
+  if(checked("kitchenIsland")) t += "\n- Kitchen Island: Yes";
+  if(checked("kitchenOpen")) t += "\n- Open Kitchen: Yes";
+  t += `\n\n[BEDROOM]\n- Style: ${val("bedroomStyle")}\n- Type: ${val("bedroomType")}\n- Floor: ${val("bedroomFloor")}\n- Wall Color: ${val("bedroomWallColor")}\n- Bed Style: ${val("bedStyle")}\n- Storage: ${val("bedroomStorage")}`;
+  if(checked("bedroomWalkinCloset")) t += "\n- Walk-in Closet: Yes";
+  if(checked("bedroomEnsuite")) t += "\n- Ensuite Bathroom: Yes";
+  t += `\n\n[BATHROOM]\n- Style: ${val("bathroomStyle")}\n- Type: ${val("bathroomType")}\n- Floor: ${val("bathroomFloor")}\n- Wall: ${val("bathroomWall")}\n- Shower: ${val("showerType")}\n- Sanitary: ${val("bathroomSanitary")}`;
+  if(checked("bathroomBathtub")) t += "\n- Bathtub: Yes";
+  if(checked("bathroomBidet")) t += "\n- Bidet: Yes";
+  t += `\n\n[LIVING ROOM]\n- Style: ${val("livingStyle")}\n- Floor: ${val("livingFloor")}\n- Wall Color: ${val("livingWallColor")}\n- Sofa: ${val("sofaStyle")}\n- Coffee Table: ${val("coffeeTable")}`;
+  if(checked("livingFireplace")) t += "\n- Fireplace: Yes";
+  if(checked("livingTvWall")) t += "\n- TV Wall: Yes";
+  t += `\n\n[HOME OFFICE]\n- Style: ${val("officeStyle")}\n- Floor: ${val("officeFloor")}\n- Wall Color: ${val("officeWallColor")}\n- Desk: ${val("deskStyle")}\n- Storage: ${val("officeStorage")}`;
+  t += `\n\n[OTHER ROOMS]\n- Kids Room: ${val("kidsStyle")}\n- Laundry: ${val("laundryStyle")}\n- Storage: ${val("storageStyle")}\n- Multi-purpose: ${val("multiPurposeStyle")}`;
+  return t;
+}
+function getCeilingLightingDetails(){
+  const residential = isResidential(val("cbBuildingType"));
+  let t = "";
+  t += `\n[CEILING]\n- Type: ${val("generalCeilingType")}\n- Height: ${val("ceilingHeight")} m\n- Pattern: ${val("ceilingPattern")}\n- Color: ${val("ceilingColor")}`;
+  if(checked("ceilingCove")) t += "\n- Cove Ceiling: Yes";
+  if(checked("ceilingDrop")) t += "\n- Drop Ceiling: Yes";
+  t += `\n\n[GENERAL LIGHTING]\n- Main Light: ${val("mainLightType")}\n- Color Temp: ${val("colorTemperature")}\n- Lumens: ${val("lumens")}\n- Control: ${val("lightingControl")}`;
+  if(checked("lightingDimmer")) t += "\n- Dimmer: Yes";
+  if(checked("lightingSmart")) t += "\n- Smart Lighting: Yes";
+  if(residential){
+    t += `\n\n[KITCHEN LIGHTING]\n- Task: ${val("kitchenTaskLight")}\n- Accent: ${val("kitchenAccentLight")}\n- Under Cabinet: ${val("kitchenUnderCabinetLight")}`;
+    if(checked("kitchenPendantLight")) t += "\n- Pendant over Island: Yes";
+    t += `\n\n[BEDROOM LIGHTING]\n- Reading: ${val("bedroomReadingLight")}\n- Accent: ${val("bedroomAccentLight")}\n- Chandelier: ${val("bedroomChandelier")}`;
+    if(checked("bedroomStripLight")) t += "\n- LED Strip: Yes";
+    t += `\n\n[BATHROOM LIGHTING]\n- Vanity: ${val("bathroomVanityLight")}\n- Main: ${val("bathroomMainLight")}`;
+    if(checked("bathroomWaterproof")) t += "\n- Waterproof: Yes";
+    t += `\n\n[LIVING ROOM LIGHTING]\n- Main: ${val("livingMainLight")}\n- Wall Washer: ${val("livingWallLight")}\n- Reading: ${val("livingReadingLight")}`;
+    if(checked("livingChandelier")) t += "\n- Chandelier: Yes";
+    t += `\n\n[HOME OFFICE LIGHTING]\n- Desk Lamp: ${val("officeDeskLight")}\n- Main: ${val("officeMainLight")}\n- Task: ${val("officeTaskLight")}`;
+  } else {
+    t += `\n\n[INTERIOR LIGHTING — general for ${val("cbBuildingType")}]\n- Use lighting appropriate to the functional spaces of this building type (ambient + task + accent as needed).`;
+  }
+  t += `\n\n[EXTERIOR LIGHTING]\n- Path/Garden: ${val("exteriorPathLight")}\n- Facade: ${val("exteriorFacadeLight")}\n- Balcony: ${val("exteriorBalconyLight")}`;
+  if(checked("exteriorMotionSensor")) t += "\n- Motion Sensor: Yes";
+  return t;
+}
+function getPresentationBoardInstruction(t){
+  if(!t.includes("Presentation Board")) return "";
+  const fp = getFloorPlansList().replace(/\n/g, " | ").replace(/ \| $/, "");
+  return block("📋 PRESENTATION BOARD", [
+    `PROJECT: ${val("txtProject")}`,
+    `STYLE: ${val("cbStyle")} | FLOORS: ${getFloorNum()}`,
+    "LAYOUT:",
+    "- MAIN 3D EXTERIOR RENDER (Hero Image)",
+    "- PROJECT TITLE BLOCK",
+    `- FLOOR PLANS: ${fp}`,
+    "- 4 ELEVATIONS (2D): N, S, E, W",
+    "- 4 INTERIOR RENDERS (3D): Living, Bedroom, Kitchen, Bathroom",
+    `- ${checked("showMaterialBoard") ? "MATERIAL BOARD" : "LANDSCAPE"}`
+  ]);
+}
+function getBOQSection(){
+  if(!checked("chkIncludeBOQ")) return "";
+  let scope = [];
+  if(checked("chkStruct")) scope.push("Structure");
+  if(checked("chkArch")) scope.push("Architecture");
+  if(checked("chkElec")) scope.push("Electrical");
+  if(checked("chkSanitary")) scope.push("Sanitary");
+  if(checked("chkInterior")) scope.push("Interior");
+  return `\n[BOQ]\n- Format: ${val("cbBOQFormat")}\n- Scope: ${scope.join(", ") || "-"}\n- Price Basis: ${val("cbPriceBasis")}\n- Labor: ${val("cbLaborRate")}\n- Wastage: ${val("txtWastage")}%`;
+}
+
+/* =================== Material board sync =================== */
+function syncMaterialBoard(){
+  const set = (id, v) => { const e = $(id); if(e) e.value = v; };
+  set("syncExteriorWall", val("cbWallMaterial"));
+  set("syncInteriorWall", val("cbInteriorWallMaterial") || val("cbWallMaterial"));
+  set("syncFloor", val("cbFloorMaterial"));
+  set("syncRoof", val("cbRoofMaterial"));
+  set("syncWindowFrame", "อะลูมิเนียม");
+  set("syncExteriorColor", val("cbExtTone"));
+  set("syncInteriorColor", val("cbIntTone"));
+  set("syncCountertop", val("cbCountertop"));
+  set("syncBathroom", val("cbBathWallMaterial"));
+}
+
+/* =================== Drawing types =================== */
+function updateDrawingTypes(){
+  const n = getFloorNum();
+  const baseTypes = ["3D Render ภายนอก","3D Top View","3D Section ภายใน","2D ผังบริเวณ (Site Plan)"];
+  for(let i = 1; i <= n; i++) baseTypes.push(i === 1 ? "2D แปลนพื้นชั้น 1 (1st Floor Plan)" : `2D แปลนพื้นชั้น ${i} (${i}th Floor Plan)`);
+  const moreTypes = [
+    "2D แปลนหลังคา (Roof Plan)","2D รูปด้านทิศเหนือ (North Elevation)","2D รูปด้านทิศใต้ (South Elevation)",
+    "2D รูปด้านทิศตะวันออก (East Elevation)","2D รูปด้านทิศตะวันตก (West Elevation)","2D รูปด้าน 4 ด้าน (4 Elevations - All in One Sheet)",
+    "2D รูปตัด A-A' (Section A-A')","2D รูปตัด B-B' (Section B-B')","Presentation Board - แผ่นนำเสนอรวมทุกมุมมอง","2D Layout รวม (Combined Layout)",
+    "3D ภายใน: ห้องครัว (Kitchen Interior)","3D ภายใน: ห้องนอน (Bedroom Interior)","3D ภายใน: ห้องน้ำ (Bathroom Interior)",
+    "3D ภายใน: ห้องนั่งเล่น (Living Room Interior)","3D ภายใน: ห้องทำงาน (Home Office Interior)"
+  ];
+  const systemTypes = [
+    "2D แปลนไฟฟ้า (Electrical Plan)","2D แปลนสุขาภิบาล (Plumbing/Sanitary Plan)","2D แปลนฝ้าเพดาน (Ceiling Plan)",
+    "2D แบบขยายประตูหน้าต่าง (Door/Window Detail)","2D แบบขยายบันได (Stair Detail)","2D แบบขยายห้องน้ำ (Bathroom Detail)",
+    "2D แบบขยายครัว (Kitchen Detail)","2D แบบขยายโครงสร้าง (Structural Detail)"
+  ];
+  const docTypes = [
+    "BOQ - ตารางประมาณราคา (Bill of Quantities Table)"
+  ];
+  const all = [...baseTypes, ...moreTypes, ...systemTypes, ...docTypes];
+  const cb = $("cbType"); const cur = cb.value;
+  cb.innerHTML = "";
+  all.forEach(t => { const o = document.createElement("option"); o.value = t; o.textContent = t; cb.appendChild(o); });
+  const idx = [...cb.options].findIndex(o => o.value === cur);
+  cb.selectedIndex = idx >= 0 ? idx : 0;
+  updateSheetCounter();
+}
+
+/* =================== Display quick actions =================== */
+function setAllDisplay(state){ displayCheckboxIds.forEach(id => { const c = $(id); if(c) c.checked = state; }); generatePrompt(); }
+
+/* =================== Core: generate prompt =================== */
+function generatePrompt(returnOnly = false){
+  try{
+    const typeName = val("cbType");
+
+    if(isBOQType(typeName)){
+      const boqPrompt = buildBOQPrompt();
+      if(!returnOnly){
+        $("txtPrompt").value = boqPrompt;
+        $("seedDisplay").textContent = globalSeed;
+        $("modeBadge").innerHTML = "📊 ตาราง BOQ";
+        $("qualityBadge").innerHTML = "📄 เอกสาร";
+        $("continuityBadge").innerHTML = "—";
+        updateTypeBadge(); updateStyleBadge();
+        updateSheetCounter();
+        const whB = $("workflowHint");
+        if(whB) whB.innerHTML = "📊 กำลังสร้างตาราง BOQ (เฉพาะตาราง ไม่มีภาพบ้าน)";
+      }
+      return boqPrompt;
+    }
+
+    const renderStyle = document.querySelector('input[name="renderStyle"]:checked').value;
+    const isSingle = getImageMode();
+    const enforceCont = checked("chkEnforceContinuity");
+    const quality = val("cbRenderQuality");
+    const settings = renderQualitySettings[quality];
+    const refURL = val("txtRefURL").trim();
+
+    if(typeName === "3D Render ภายนอก") base3DModelCreated = true;
+
+    const floorsEng = val("cbFloors") === "ชั้นครึ่ง" ? "1.5" : val("cbFloors");
+
+    let visualText = "";
+    if(renderStyle === "photorealistic_3d") visualText = `📸 PHOTOREALISTIC RENDER — ${settings.name}\n${settings.keywords}\nHigh resolution, ray tracing, global illumination.`;
+    else if(renderStyle === "technical_3d") visualText = "🔧 TECHNICAL 3D RENDER — Engineering style\nIsometric view, wireframe, technical annotations.";
+    else if(renderStyle === "color_2d") visualText = "🎨 2D COLOR RENDER — High-quality color 2D drawing\nFlat orthographic projection with rich colors. NO 3D perspective.";
+    else if(renderStyle === "technical_2d_bw") visualText = "⚫ 2D BLACK & WHITE TECHNICAL DRAWING\nTraditional blueprint style, hatch patterns.";
+    if(checked("chkWatermark") && renderStyle !== "technical_2d_bw"){
+      const wm = val("txtWatermark").trim();
+      if(wm) visualText += ` with '${wm}' watermark / ลายน้ำข้อความ '${wm}'`;
+    }
+
+    const refInstruction = refURL ? `\nReference 3D Model URL: ${refURL}\n- Use proportions from this URL as reference\n` : "";
+    const continuity = enforceCont ? `Project: ${val("txtProject")} | Style: ${val("cbStyle")} | Wall: ${val("cbWallMaterial")}` : "";
+
+    let landscapeText = "";
+    const lsDetails = getLandscapeDetails();
+    if(lsDetails && checked("showLandscape") && renderStyle === "photorealistic_3d") landscapeText = `\n[LANDSCAPE & EXTERIOR]\n${lsDetails}`;
+
+    const prompt =
+`AI ARCHITECTURAL DRAWING PROMPT
+========================================
+⚡ INSTRUCTION TO AI: This is a COMPLETE specification. Generate the image directly. Do NOT ask any clarifying questions. If any detail is unspecified, choose sensible professional defaults that fit "${bili(val("cbBuildingType"))}". Treat all values below as final. (Values are given in Thai with English in parentheses — use the English meaning.)
+BUILDING TYPE: ${bili(val("cbBuildingType"))}
+========================================
+${get3DFirstInstruction(typeName)}
+${getRenderStyleInstruction()}${get2DInstruction(typeName)}========================================
+DRAWING TYPE: ${typeName}
+Sheet: ${val("txtSheetNo")} | Drawing: ${val("txtDrgNo")}
+${isSingle ? "⚠️ CREATE ONLY ONE SINGLE IMAGE" : ""}
+${continuity}
+${getStiltDetailsEnglish()}${refInstruction}${getPresentationBoardInstruction(typeName)}${getDisplayOptions()}========================================
+Seed: ${globalSeed}
+${visualText}
+========================================
+Atmosphere: ${bili(val("cbAtmosphere"))}
+Style: ${val("cbStyle")} | Roof: ${val("cbRoofStyle")} | Exterior Tone: ${bili(val("cbExtTone"))}
+========================================
+Dimensions:
+- Floors: ${floorsEng} | Area: ${val("txtArea")} sq.m.
+- Bedrooms: ${val("cbBedrooms")} | Bathrooms: ${val("cbBathrooms")} | Parking: ${val("cbParking")}
+========================================
+Main Materials:
+- Exterior Wall: ${bili(val("cbWallMaterial"))}
+- Interior Wall: ${bili(val("cbInteriorWallMaterial"))}
+- Floor: ${bili(val("cbFloorMaterial"))}
+- Roof: ${bili(val("cbRoofMaterial"))} (${val("txtRoofSlope")}°)
+========================================
+${getInteriorDetails()}
+${getCeilingLightingDetails()}
+${getMaterialBoardDetails()}${landscapeText}${getBOQSection()}
+========================================
+Notes: ${val("txtNotes")}
+Scale: ${val("cbScale")} | Quantity: ${val("cbQty")}
+========================================
+CREATE ONLY ONE IMAGE
+
+PROJECT TITLE BLOCK:
+โครงการ: ${dash("txtProject")}
+เจ้าของ: ${dash("txtOwner")}
+ผู้ออกแบบ: ${dash("txtDesigner")}
+วิศวกร: ${dash("txtEngineer")}
+สถาปนิก: ${dash("txtArchitect")}`;
+
+    if(!returnOnly){
+      $("txtPrompt").value = prompt;
+      $("seedDisplay").textContent = globalSeed;
+      $("modeBadge").innerHTML = isSingle ? "🎨 1 ภาพ" : "🎨 หลายภาพ";
+      $("qualityBadge").innerHTML = "✨ " + settings.name;
+      $("continuityBadge").innerHTML = enforceCont ? "🔗 ต่อเนื่อง" : "🔓 อิสระ";
+      updateTypeBadge(); updateStyleBadge(); updatePresentationHint();
+      updateSheetCounter();
+
+      const wh = $("workflowHint");
+      if(wh){
+        if(typeName === "3D Render ภายนอก") wh.innerHTML = "🎯 กำลังสร้าง Base 3D Model (ภาพอ้างอิงหลัก)";
+        else if(typeName.includes("Presentation Board")) wh.innerHTML = "📋 กำลังสร้าง Presentation Board";
+        else if(renderStyle === "photorealistic_3d") wh.innerHTML = "📸 กำลังสร้างภาพ 3D เสมือนจริง";
+        else if(renderStyle === "technical_3d") wh.innerHTML = "🔧 กำลังสร้างภาพ 3D เทคนิค";
+        else if(renderStyle === "color_2d") wh.innerHTML = "🎨 กำลังสร้างแบบ 2D เรนเดอร์สี";
+        else wh.innerHTML = "⚫ กำลังสร้างแบบ 2D เทคนิคขาวดำ";
+      }
+    }
+    return prompt;
+  }catch(err){
+    console.error(err);
+    toast("เกิดข้อผิดพลาดในการสร้างคำสั่ง", "error");
+    return "";
+  }
+}
+
+/* =================== Sheet navigation =================== */
+function setSheetNo(num){
+  $("txtSheetNo").value = String(num).padStart(2, "0");
+  $("txtDrgNo").value = "A-" + String(num).padStart(2, "0");
+}
+function totalSheets(){ const cb = $("cbType"); return cb ? cb.options.length : 1; }
+function updateSheetCounter(){
+  const cb = $("cbType");
+  const el = $("sheetCounter");
+  if(!cb || !el) return;
+  const cur = cb.selectedIndex + 1, total = cb.options.length;
+  el.innerHTML = `📑 แผ่นที่ <strong>${cur}</strong> / ${total} &nbsp;·&nbsp; ${cb.value}`;
+}
+/* advance the drawing type to the next one; returns false if already at the last sheet */
+function bumpSheet(){
+  const cb = $("cbType");
+  if(!cb || !cb.options.length) return false;
+  if(cb.selectedIndex >= cb.options.length - 1){ return false; }   // reached limit
+  cb.selectedIndex += 1;
+  setSheetNo(cb.selectedIndex + 1);
+  return true;
+}
+function nextSheet(){
+  const total = totalSheets();
+  const moved = bumpSheet();
+  if(!moved){
+    toast(`📑 ถึงแผ่นสุดท้ายแล้ว (ครบ ${total} แผ่นตามรายการแบบ)`, "info");
+    return;
+  }
+  generatePrompt();
+  const cur = ($("cbType").selectedIndex) + 1;
+  toast(`⏩ แผ่นที่ ${cur}/${total}`, "info");
+}
+function quickMode(){
+  const total = totalSheets();
+  const p = generatePrompt(true);
+  if(p) copyToClipboard(p);
+  autoSave();
+  const moved = bumpSheet();
+  if(!moved){
+    toast(`⚡ สร้าง+คัดลอก+บันทึกแผ่นสุดท้ายแล้ว (ครบ ${total} แผ่น)`);
+    return;
+  }
+  generatePrompt();
+  const cur = ($("cbType").selectedIndex) + 1;
+  toast(`⚡ โหมดด่วน: สร้าง+คัดลอก+บันทึก → แผ่นที่ ${cur}/${total}`);
+}
+function resetSeed(){
+  globalSeed = generateRandomSeed();
+  const cb = $("cbType");
+  if(cb) cb.selectedIndex = 0;
+  setSheetNo(1);
+  base3DModelCreated = false;
+  generatePrompt();
+  toast("🔄 Seed ใหม่: " + globalSeed + " (กลับไปแผ่น 01)", "info");
+}
+function goBOQ(){
+  const p = buildBOQPrompt();
+  const out = document.getElementById("txtPromptBOQ") || document.getElementById("txtPrompt");
+  if(out) out.value = p;
+  const inc = document.getElementById("chkIncludeBOQ"); if(inc) inc.checked = true;
+  toast("📊 สร้างคำสั่ง BOQ แล้ว (เฉพาะตาราง ไม่มีภาพบ้าน)");
+  return p;
+}
+function downloadPrompt(){
+  const text = $("txtPrompt").value;
+  if(!text){ toast("ยังไม่มีคำสั่งให้ดาวน์โหลด", "error"); return; }
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${val("txtProject")}_${val("txtDrgNo")}.txt`.replace(/\s+/g, "_");
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("⬇️ ดาวน์โหลดเรียบร้อย");
+}
+
+/* =================== Database (localStorage) =================== */
+function loadDB(){
+  try{ const raw = localStorage.getItem(DB_KEY); projectDatabase = raw ? JSON.parse(raw) : []; }
+  catch{ projectDatabase = []; }
+}
+function persistDB(){
+  try{ localStorage.setItem(DB_KEY, JSON.stringify(projectDatabase)); }
+  catch{ toast("บันทึกถาวรไม่ได้ (localStorage ถูกปิด)", "error"); }
+}
+function projectKey(){ return `${val("cbBuildingType")} — ${val("txtOwner")}`; }
+function saveSheet(silent){
+  const key = projectKey();
+  const sheetNo = val("txtSheetNo");
+  const entry = {
+    projectKey:key, sheetNo,
+    drgNo:val("txtDrgNo"), drgType:val("cbType"),
+    prompt:$("txtPrompt").value,
+    buildingType:val("cbBuildingType"),
+    projectName:val("txtProject"), buildingStyle:val("cbStyle"),
+    timestamp:new Date().toISOString()
+  };
+  const i = projectDatabase.findIndex(p => p.projectKey === key && p.sheetNo === sheetNo);
+  if(i >= 0) projectDatabase[i] = entry; else projectDatabase.push(entry);
+  persistDB();
+  refreshDBUI();
+  if(!silent) toast(`💾 บันทึกแผ่น ${sheetNo} แล้ว`);
+}
+function autoSave(){ if(checked("chkSaveHistory")) saveSheet(true); }
+function refreshDBUI(){
+  const projSel = $("cbSelectProject");
+  if(projSel){
+    const cur = projSel.value;
+    const projects = [...new Set(projectDatabase.map(p => p.projectKey))];
+    projSel.innerHTML = '<option value="">-- เลือกโปรเจค --</option>';
+    projects.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; projSel.appendChild(o); });
+    if([...projSel.options].some(o => o.value === cur)) projSel.value = cur;
+  }
+  refreshSheetList();
+  const stat = $("dbStat");
+  if(stat){
+    const np = new Set(projectDatabase.map(p => p.projectKey)).size;
+    stat.textContent = projectDatabase.length ? `📦 ${np} โปรเจค · ${projectDatabase.length} แผ่นงานที่บันทึกไว้` : "ยังไม่มีข้อมูลบันทึก";
+  }
+}
+function refreshSheetList(){
+  const sheetSel = $("cbSelectSheet"); if(!sheetSel) return;
+  const key = val("cbSelectProject");
+  const sheets = projectDatabase.filter(p => p.projectKey === key);
+  sheetSel.innerHTML = '<option value="">-- เลือกแผ่นงาน --</option>';
+  sheets.forEach(s => { const o = document.createElement("option"); o.value = s.sheetNo; o.textContent = `${s.sheetNo} | ${s.drgType}`; sheetSel.appendChild(o); });
+}
+function restoreSheet(){
+  const key = val("cbSelectProject"), sheetNo = val("cbSelectSheet");
+  if(!key || !sheetNo){ toast("กรุณาเลือกโปรเจคและแผ่นงาน", "error"); return; }
+  const r = projectDatabase.find(p => p.projectKey === key && p.sheetNo === sheetNo);
+  if(!r){ toast("ไม่พบข้อมูล", "error"); return; }
+  if(r.buildingType) $("cbBuildingType").value = r.buildingType;
+  $("txtProject").value = r.projectName || "";
+  if(r.buildingStyle) $("cbStyle").value = r.buildingStyle;
+  if(r.drgType){ updateDrawingTypes(); $("cbType").value = r.drgType; }
+  $("txtSheetNo").value = r.sheetNo;
+  $("txtDrgNo").value = r.drgNo || "";
+  generatePrompt();
+  if(r.prompt) $("txtPrompt").value = r.prompt;
+  toast("📥 เรียกคืนสำเร็จ");
+}
+function deleteSheet(){
+  const key = val("cbSelectProject"), sheetNo = val("cbSelectSheet");
+  if(!key || !sheetNo){ toast("เลือกแผ่นที่จะลบก่อน", "error"); return; }
+  projectDatabase = projectDatabase.filter(p => !(p.projectKey === key && p.sheetNo === sheetNo));
+  persistDB(); refreshDBUI();
+  toast("🗑️ ลบแผ่นงานแล้ว", "info");
+}
+function clearDB(){
+  if(!confirm("ลบฐานข้อมูลทั้งหมด? การกระทำนี้ย้อนกลับไม่ได้")) return;
+  projectDatabase = []; persistDB(); refreshDBUI();
+  toast("⚠️ ล้างฐานข้อมูลแล้ว", "info");
+}
+
+/* =================== Wiring =================== */
+function bindGenerateOn(ids){
+  ids.forEach(id => { const e = $(id); if(e) e.addEventListener("change", () => generatePrompt()); });
+}
+function bindEvents(){
+  // tabs
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      $("tab-" + btn.dataset.tab).classList.add("active");
+      if(btn.dataset.tab === "material") syncMaterialBoard();
+      if(btn.dataset.tab === "database") refreshDBUI();
+      if(btn.dataset.tab === "pricedb") renderPriceTable($("priceSearch") ? $("priceSearch").value : "");
+    });
+  });
+
+  $("cbBuildingType").addEventListener("change", () => { $("txtProject").value = val("cbBuildingType"); applyBuildingDefaults(val("cbBuildingType")); generatePrompt(); });
+  $("cbFloors").addEventListener("change", () => { updateDrawingTypes(); generatePrompt(); });
+  $("chkStiltHouse").addEventListener("change", toggleStiltSection);
+
+  $("btnGenerate").addEventListener("click", () => { generatePrompt(); autoSave(); toast("✅ สร้างคำสั่งเรียบร้อย"); });
+  $("btnCopy").addEventListener("click", () => copyToClipboard($("txtPrompt").value));
+  $("btnDownload").addEventListener("click", downloadPrompt);
+  $("btnNextSheet").addEventListener("click", nextSheet);
+  $("btnQuickMode").addEventListener("click", quickMode);
+  $("btnResetSeed").addEventListener("click", resetSeed);
+  $("btnBOQ").addEventListener("click", goBOQ);
+
+  $("cbType").addEventListener("change", () => { setSheetNo($("cbType").selectedIndex + 1); generatePrompt(); updatePresentationHint(); updateTypeBadge(); updateStyleBadge(); });
+  $("cbStyle").addEventListener("change", () => { syncMaterialBoard(); generatePrompt(); });
+  ["cbRenderQuality","chkWatermark","txtWatermark","chkIncludeBOQ","chkEnforceContinuity","cbScale","cbQty","cbAtmosphere","cbRoofStyle","txtRoofSlope"].forEach(id => bindGenerateOn([id]));
+
+  document.querySelectorAll('input[name="renderStyle"]').forEach(r => r.addEventListener("change", () => { updateStyleBadge(); generatePrompt(); }));
+  document.querySelectorAll('input[name="imageMode"]').forEach(r => r.addEventListener("change", () => { getImageMode(); generatePrompt(); }));
+
+  bindGenerateOn(displayCheckboxIds);
+  $("btnSelectAllDisplay").addEventListener("click", () => { setAllDisplay(true); toast("✅ เลือกแสดงผลทั้งหมด"); });
+  $("btnClearAllDisplay").addEventListener("click", () => { setAllDisplay(false); toast("❌ ไม่เลือกแสดงผลทั้งหมด"); });
+  $("btnDefaultDisplay").addEventListener("click", () => { setAllDisplay(true); toast("🔄 กลับค่าเริ่มต้น"); });
+
+  // landscape + material sync
+  ["landscapeGarden","landscapeWalkway","landscapeLawn","landscapeWater","landscapeSeating","landscapeDecor","landscapeSurface","landscapeFence","landscapeGate","landscapeCarport","landscapeBbq","landscapePlayground","landscapePetArea"].forEach(id => bindGenerateOn([id]));
+  ["cbWallMaterial","cbInteriorWallMaterial","cbFloorMaterial","cbRoofMaterial","cbExtTone","cbIntTone","cbCountertop","cbBathWallMaterial"].forEach(id => {
+    const e = $(id); if(e) e.addEventListener("change", () => { syncMaterialBoard(); generatePrompt(); });
+  });
+
+  // stilt fields live preview
+  ["txtStiltHeight","cbStiltHeightUnit","cbUnderHouseType","cbUnderWallType","cbStairLocation","cbStairMaterialStilt","cbUnderVentilation","cbUnderFinish","chkRetainingWall","chkUnderLighting"].forEach(id => {
+    const e = $(id); if(e) e.addEventListener("change", () => { updateStiltPreview(); generatePrompt(); });
+  });
+
+  // BOQ fields
+  ["cbBOQFormat","cbPriceBasis","cbLaborRate","txtWastage","chkStruct","chkArch","chkElec","chkSanitary","chkInterior"].forEach(id => bindGenerateOn([id]));
+
+  // database
+  $("cbSelectProject").addEventListener("change", refreshSheetList);
+  $("btnSaveSheet").addEventListener("click", () => saveSheet(false));
+  $("btnRestoreForm").addEventListener("click", restoreSheet);
+  $("btnDeleteSheet").addEventListener("click", deleteSheet);
+  $("btnClearDB").addEventListener("click", clearDB);
+
+  // ---- ฐานราคากลาง (price DB) ----
+  $("btnImportCSV").addEventListener("click", () => $("fileCSV").click());
+  $("fileCSV").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = () => { importPriceCSV(String(reader.result)); e.target.value = ""; };
+    reader.onerror = () => toast("อ่านไฟล์ไม่สำเร็จ", "error");
+    reader.readAsText(f, "utf-8");
+  });
+  $("btnTemplateCSV").addEventListener("click", downloadTemplateCSV);
+  $("btnExportCSV").addEventListener("click", exportPriceCSV);
+  $("btnAddPrice").addEventListener("click", () => {
+    priceDB.push({category:"ทั่วไป", code:"", item:"รายการใหม่", unit:"หน่วย", material:0, labor:0, note:""});
+    persistPriceDB(); renderPriceTable(""); $("priceSearch").value = "";
+    toast("➕ เพิ่มรายการ (แก้ไขในตารางแล้วระบบจะบันทึกอัตโนมัติ)");
+  });
+  $("btnResetPriceDB").addEventListener("click", () => {
+    priceDB = PRICE_DB_DEFAULT.slice(); persistPriceDB(); renderPriceTable($("priceSearch").value);
+    toast("↺ คืนค่าชุดเริ่มต้นแล้ว");
+  });
+  $("priceSearch").addEventListener("input", () => renderPriceTable($("priceSearch").value));
+  // แก้ไขราคาในตารางได้โดยตรง (double-click เซลล์)
+  $("priceTbody").addEventListener("dblclick", (e) => {
+    const td = e.target.closest("td"); const tr = e.target.closest("tr");
+    if(!td || !tr) return;
+    const i = parseInt(tr.dataset.i); const col = td.cellIndex;
+    const fields = ["category","code","item","unit","material","labor"];
+    if(col > 5) return;
+    const key = fields[col];
+    const cur = priceDB[i][key];
+    const nv = prompt("แก้ไข " + key + ":", cur);
+    if(nv === null) return;
+    priceDB[i][key] = (key==="material"||key==="labor") ? num(nv) : nv;
+    persistPriceDB(); renderPriceTable($("priceSearch").value);
+  });
+}
+
+/* =================== Init =================== */
+function init(){
+  const allStyles = [...stylePart1, ...stylePart2, ...stylePart3, ...thaiStyles];
+  populateSelect("cbStyle", allStyles, 0);
+  populateSelect("cbRoofStyle", roofStyles, 0);
+  populateSelect("cbExtTone", extTones, 0);
+  populateSelect("cbIntTone", intTones, 0);
+  populateSelect("cbAtmosphere", atmospheres, 0);
+  populateSelect("cbFloors", floors, 0);
+  populateSelect("cbBedrooms", a10, 3);
+  populateSelect("cbBathrooms", a10, 2);
+  populateSelect("cbParking", a10, 1);
+  populateSelect("cbMasterBedSize", masterBedSizes, 0);
+  populateSelect("cbBedSize", bedSizes, 0);
+  populateSelect("cbMasterBathSize", masterBathSizes, 0);
+  populateSelect("cbBathSize", bathSizes, 0);
+  populateSelect("cbWallMaterial", wallMaterials, 0);
+  populateSelect("cbInteriorWallMaterial", wallMaterials, 0);
+  populateSelect("cbCeilingMaterial", ceilingMaterials, 0);
+  populateSelect("cbFloorMaterial", floorMaterials, 0);
+  populateSelect("cbRoofMaterial", roofMaterials, 0);
+  populateSelect("cbBathFloorMaterial", bathFloors, 0);
+  populateSelect("cbBathCeilingMaterial", bathCeilings, 0);
+  populateSelect("cbBathWallMaterial", bathWalls, 0);
+  populateSelect("cbKitchenFloorMaterial", kitchenFloors, 0);
+  populateSelect("cbKitchenWallMaterial", kitchenWalls, 0);
+  populateSelect("cbStairMaterial", stairMaterials, 0);
+  populateSelect("cbPhase", phases, 0);
+  populateSelect("cbPipe", pipes, 0);
+  populateSelect("cbSeptic", septics, 0);
+  populateSelect("cbWaterTank", waterTanks, 0);
+  populateSelect("cbKitchenType", kitchenTypes, 0);
+  populateSelect("cbCountertop", countertops, 0);
+  populateSelect("cbToiletStyle", toiletStyles, 0);
+  populateSelect("cbSanitaryBrand", sanitaryBrands, 0);
+  populateSelect("cbAddons", addons, 0);
+  populateSelect("cbQty", quantities, 0);
+  populateSelect("cbBOQFormat", boqFormats, 0);
+  populateSelect("cbPriceBasis", priceBases, 0);
+  populateSelect("cbLaborRate", laborRates, 0);
+  populateSelect("cbScale", scales, 2);
+  populateSelect("cbPiling", pilingList, 2);
+  populateSelect("cbAsBuiltRigid", asBuiltRigids, 0);
+  populateSelect("cbSiteContext", siteContexts, 0);
+  populateSelect("cbAsBuiltFix", asBuiltFixes, 0);
+  populateSelect("cbAsBuiltNotes", asBuiltNotesList, 0);
+  populateSelect("cbExtensionDetail", extensionDetails, 0);
+  populateSelect("cbBuildingType", buildingTypes, 0);
+
+  // interior
+  populateSelect("kitchenStyle", interiorStyles, 0);
+  populateSelect("kitchenLayout", kitchenLayouts, 0);
+  populateSelect("kitchenCabinetMaterial", cabinetMaterials, 0);
+  populateSelect("kitchenCabinetColor", kitchenColors, 0);
+  populateSelect("kitchenCountertop", countertops, 0);
+  populateSelect("kitchenBacksplash", backsplashMaterials, 0);
+  populateSelect("bedroomStyle", bedroomStyles, 0);
+  populateSelect("bedroomType", bedroomTypes, 0);
+  populateSelect("bedroomFloor", bedroomFloors, 0);
+  populateSelect("bedroomWallColor", bedroomWallColors, 0);
+  populateSelect("bedStyle", bedStyles, 0);
+  populateSelect("bedroomStorage", bedroomStorages, 0);
+  populateSelect("bathroomStyle", bathroomStyles, 0);
+  populateSelect("bathroomType", bathroomTypes, 0);
+  populateSelect("bathroomFloor", bathroomFloors, 0);
+  populateSelect("bathroomWall", bathroomWalls, 0);
+  populateSelect("showerType", showerTypes, 0);
+  populateSelect("bathroomSanitary", bathroomSanitary, 0);
+  populateSelect("livingStyle", livingStyles, 0);
+  populateSelect("livingFloor", livingFloors, 0);
+  populateSelect("livingWallColor", livingWallColors, 0);
+  populateSelect("sofaStyle", sofaStyles, 0);
+  populateSelect("coffeeTable", coffeeTableStyles, 0);
+  populateSelect("officeStyle", officeStyles, 0);
+  populateSelect("officeFloor", officeFloors, 0);
+  populateSelect("officeWallColor", officeWallColors, 0);
+  populateSelect("deskStyle", deskStyles, 0);
+  populateSelect("officeStorage", officeStorages, 0);
+  populateSelect("kidsStyle", kidsStyles, 0);
+  populateSelect("laundryStyle", laundryStyles, 0);
+  populateSelect("storageStyle", storageStyles, 0);
+  populateSelect("multiPurposeStyle", multiPurposeStyles, 0);
+
+  // ceiling & lighting
+  populateSelect("generalCeilingType", ceilingTypes, 0);
+  populateSelect("ceilingPattern", ceilingPatterns, 0);
+  populateSelect("ceilingColor", ceilingColors, 0);
+  populateSelect("mainLightType", lightTypesList, 0);
+  populateSelect("colorTemperature", colorTemps, 0);
+  populateSelect("lumens", lumensList, 0);
+  populateSelect("lightingControl", lightControls, 0);
+  populateSelect("kitchenTaskLight", taskLightTypes, 0);
+  populateSelect("kitchenAccentLight", accentLightTypes, 0);
+  populateSelect("kitchenUnderCabinetLight", taskLightTypes, 0);
+  populateSelect("bedroomReadingLight", taskLightTypes, 0);
+  populateSelect("bedroomAccentLight", accentLightTypes, 0);
+  populateSelect("bedroomChandelier", lightTypesList, 0);
+  populateSelect("bathroomVanityLight", lightTypesList, 0);
+  populateSelect("bathroomMainLight", lightTypesList, 0);
+  populateSelect("livingMainLight", lightTypesList, 0);
+  populateSelect("livingWallLight", lightTypesList, 0);
+  populateSelect("livingReadingLight", taskLightTypes, 0);
+  populateSelect("officeDeskLight", taskLightTypes, 0);
+  populateSelect("officeMainLight", lightTypesList, 0);
+  populateSelect("officeTaskLight", taskLightTypes, 0);
+  populateSelect("exteriorPathLight", lightTypesList, 0);
+  populateSelect("exteriorFacadeLight", lightTypesList, 0);
+  populateSelect("exteriorBalconyLight", lightTypesList, 0);
+
+  // landscape
+  populateSelect("landscapeGarden", landscapeGardens, 0);
+  populateSelect("landscapeWalkway", landscapeWalkways, 0);
+  populateSelect("landscapeLawn", landscapeLawns, 0);
+  populateSelect("landscapeWater", landscapeWaters, 0);
+  populateSelect("landscapeSeating", landscapeSeatings, 0);
+  populateSelect("landscapeDecor", landscapeDecors, 0);
+  populateSelect("landscapeSurface", landscapeSurfaces, 0);
+
+  loadDB();
+  bindEvents();
+
+  applyBuildingDefaults(val("cbBuildingType"));
+  updateDrawingTypes();
+  globalSeed = generateRandomSeed();
+  syncMaterialBoard();
+  toggleStiltSection();
+  updatePresentationHint();
+  updateTypeBadge();
+  updateStyleBadge();
+  refreshDBUI();
+  loadPriceDB();
+  renderPriceTable("");
+  generatePrompt();
+
+  toast("🎉 ระบบพร้อมใช้งาน");
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+/* ===== AI Image Generation (OpenAI via backend) ===== */
+(function(){
+  let imgTimer=null, imgStart=0, imgAbort=null, imgGen=[];
+  function $g(id){ return document.getElementById(id); }
+  function setProg(pct,label){ const b=$g("imgProgressBar"); if(b)b.style.width=pct+"%"; const l=$g("imgProgressLabel"); if(l&&label)l.textContent=label; }
+  function startProgress(){
+    imgStart=Date.now();
+    $g("imgProgressWrap").style.display="block";
+    $g("imgError").style.display="none";
+    $g("btnGenImage").style.display="none";
+    $g("btnCancelImage").style.display="inline-flex";
+    let pct=8; setProg(8,"กำลังส่งคำสั่งไปยัง AI...");
+    imgTimer=setInterval(()=>{
+      const t=((Date.now()-imgStart)/1000);
+      $g("imgProgressTime").textContent=t.toFixed(1)+" วิ";
+      // progress จำลอง: ไต่ขึ้นช้า ๆ เข้าใกล้ 90% (OpenAI ไม่ส่ง % จริง)
+      if(pct<90){ pct += pct<50?2.5:(pct<75?1.2:0.5); setProg(Math.min(pct,90)); }
+      if(t>3 && t<12) setProg(null,"AI กำลังวาดภาพ...");
+      else if(t>=12) setProg(null,"ใกล้เสร็จแล้ว...");
+    },300);
+  }
+  function stopProgress(){
+    clearInterval(imgTimer); imgTimer=null;
+    $g("btnGenImage").style.display="inline-flex";
+    $g("btnCancelImage").style.display="none";
+  }
+  function showError(msg){
+    stopProgress();
+    $g("imgProgressWrap").style.display="none";
+    const e=$g("imgError"); e.style.display="block";
+    e.innerHTML="❌ "+msg;
+  }
+  function addToGallery(dataUrl){
+    imgGen.unshift(dataUrl);
+    const grid=$g("imgGalleryGrid"); if(!grid) return;
+    $g("imgGallery").style.display="block";
+    grid.innerHTML=imgGen.map((u,i)=>`<img src="${u}" data-i="${i}" style="width:100%;border-radius:8px;border:1px solid var(--line);cursor:pointer" title="คลิกเพื่อแสดงภาพนี้">`).join("");
+    grid.querySelectorAll("img").forEach(im=>im.addEventListener("click",()=>{
+      $g("imgResult").src=im.src; $g("imgResultWrap").style.display="block";
+      window.scrollTo({top:$g("imgResultWrap").offsetTop-80,behavior:"smooth"});
+    }));
+  }
+  async function generateImage(){
+    const prompt=(val("txtPrompt")||"").trim();
+    if(prompt.length<10){ toast("ยังไม่มีคำสั่ง กด 'สร้างคำสั่ง' ก่อน","error"); return; }
+    const base=(val("txtApiBase")||"").trim().replace(/\/+$/,"");
+    const url=(base||"")+"/api/generate-image";
+    const size=val("cbImgSize")||"1024x1024";
+    const quality=val("cbImgQuality")||"high";
+    startProgress();
+    imgAbort=new AbortController();
+    try{
+      const r=await fetch(url,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({prompt,size,quality}),
+        signal:imgAbort.signal
+      });
+      let data;
+      try{ data=await r.json(); }catch(e){ throw new Error("เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (อาจยังไม่ได้ deploy backend)"); }
+      if(!r.ok){ throw new Error(data.error||("HTTP "+r.status)); }
+      if(!data.image){ throw new Error("ไม่ได้รับภาพกลับมา"); }
+      setProg(100,"เสร็จแล้ว ✓");
+      setTimeout(()=>{ $g("imgProgressWrap").style.display="none"; },500);
+      stopProgress();
+      $g("imgResult").src=data.image;
+      $g("imgResultWrap").style.display="block";
+      addToGallery(data.image);
+      toast("🎉 สร้างภาพสำเร็จ");
+    }catch(e){
+      if(e.name==="AbortError"){ stopProgress(); $g("imgProgressWrap").style.display="none"; toast("ยกเลิกแล้ว","info"); return; }
+      showError(e.message||"เกิดข้อผิดพลาด");
+    }
+  }
+  function downloadImage(){
+    const src=$g("imgResult").src; if(!src){ toast("ยังไม่มีภาพ","error"); return; }
+    const a=document.createElement("a");
+    a.href=src; a.download="ai-design-"+Date.now()+".png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast("⬇️ ดาวน์โหลดภาพแล้ว");
+  }
+  document.addEventListener("DOMContentLoaded",()=>{
+    const g=$g("btnGenImage"); if(g) g.addEventListener("click",generateImage);
+    const ga=$g("btnGenImageAgain"); if(ga) ga.addEventListener("click",generateImage);
+    const c=$g("btnCancelImage"); if(c) c.addEventListener("click",()=>{ if(imgAbort) imgAbort.abort(); });
+    const dl=$g("btnDownloadImage"); if(dl) dl.addEventListener("click",downloadImage);
+  });
+})();
+
+function setMode(mode){
+  document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active", b.dataset.mode===mode));
+  document.querySelectorAll(".mode").forEach(s=>s.classList.toggle("active", s.id==="mode-"+mode));
+  if(mode==="boq"){ try{ renderPriceTable(document.getElementById("priceSearch")?document.getElementById("priceSearch").value:""); }catch(e){} }
+  if(mode==="save"){ try{ refreshDBUI(); }catch(e){} }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.addEventListener("DOMContentLoaded", function(){
+  document.querySelectorAll(".mode-btn").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+  const cp=document.getElementById("btnCopyBOQ");
+  if(cp) cp.addEventListener("click",()=>{ const t=document.getElementById("txtPromptBOQ").value; if(!t){toast("ยังไม่มีคำสั่ง BOQ","error");return;} copyToClipboard(t); });
+  const dl=document.getElementById("btnDownloadBOQ");
+  if(dl) dl.addEventListener("click",()=>{ const t=document.getElementById("txtPromptBOQ").value; if(!t){toast("ยังไม่มีคำสั่ง BOQ","error");return;} downloadText("BOQ_prompt.txt", t); });
+});
+
+</script>
+</body>
+</html>
