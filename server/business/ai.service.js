@@ -1,6 +1,6 @@
-// พร็อกซีเรียก OpenAI ฝั่งเซิร์ฟเวอร์ (ใช้ OPENAI_API_KEY จาก env)
-// ใช้ logic เดียวกับ Vercel functions (api/analyze.js, api/generate-image.js)
-// เพื่อให้ frontend เดิมทำงานได้ทั้งบน Vercel และ self-host Docker
+// Business: ออร์เคสเตรชัน AI (สร้าง prompt + เรียก OpenAI) — โยน AppError เมื่อพลาด
+import { config } from "../config.js";
+import { AppError } from "../util/AppError.js";
 
 const NO_TEXT_RULE =
   "ABSOLUTELY NO text, no letters, no Thai characters, no numbers, no labels, " +
@@ -25,10 +25,13 @@ const SYSTEM = {
     "เน้นปฏิบัติได้จริง กระชับ"
 };
 
-export async function analyze({ task = "inspect", reportText = "", spec = "", images = [], planImages = [] }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return { status: 500, body: { error: "ยังไม่ได้ตั้งค่า OPENAI_API_KEY บนเซิร์ฟเวอร์" } };
+function requireKey() {
+  if (!config.openaiApiKey) throw new AppError(500, "ยังไม่ได้ตั้งค่า OPENAI_API_KEY บนเซิร์ฟเวอร์");
+  return config.openaiApiKey;
+}
 
+export async function analyze({ task = "inspect", reportText = "", spec = "", images = [], planImages = [] }) {
+  const apiKey = requireKey();
   const system = SYSTEM[task] || SYSTEM.inspect;
   const siteImgs = (Array.isArray(images) ? images : []).filter(s => typeof s === "string" && s.startsWith("data:image")).slice(0, 6);
   const planImgs = (Array.isArray(planImages) ? planImages : []).filter(s => typeof s === "string" && s.startsWith("data:image")).slice(0, 4);
@@ -63,17 +66,16 @@ export async function analyze({ task = "inspect", reportText = "", spec = "", im
     })
   });
   const data = await r.json();
-  if (!r.ok) return { status: r.status, body: { error: (data?.error?.message) || "เรียก OpenAI ไม่สำเร็จ" } };
+  if (!r.ok) throw new AppError(r.status, (data?.error?.message) || "เรียก OpenAI ไม่สำเร็จ");
   const text = data?.choices?.[0]?.message?.content?.trim() || "";
-  if (!text) return { status: 502, body: { error: "ไม่ได้รับผลลัพธ์จาก OpenAI" } };
-  return { status: 200, body: { text } };
+  if (!text) throw new AppError(502, "ไม่ได้รับผลลัพธ์จาก OpenAI");
+  return { text };
 }
 
 export async function generateImage({ prompt, size = "1024x1024", quality = "high" }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return { status: 500, body: { error: "ยังไม่ได้ตั้งค่า OPENAI_API_KEY บนเซิร์ฟเวอร์" } };
+  const apiKey = requireKey();
   if (!prompt || typeof prompt !== "string" || prompt.trim().length < 5) {
-    return { status: 400, body: { error: "ไม่มีคำสั่ง (prompt) หรือสั้นเกินไป" } };
+    throw new AppError(400, "ไม่มีคำสั่ง (prompt) หรือสั้นเกินไป");
   }
   const finalPrompt = (prompt.slice(0, 4000) + " " + NO_TEXT_RULE).slice(0, 4000);
   const r = await fetch("https://api.openai.com/v1/images/generations", {
@@ -82,8 +84,8 @@ export async function generateImage({ prompt, size = "1024x1024", quality = "hig
     body: JSON.stringify({ model: "gpt-image-1", prompt: finalPrompt, size, quality, n: 1 })
   });
   const data = await r.json();
-  if (!r.ok) return { status: r.status, body: { error: (data?.error?.message) || "เรียก OpenAI ไม่สำเร็จ" } };
+  if (!r.ok) throw new AppError(r.status, (data?.error?.message) || "เรียก OpenAI ไม่สำเร็จ");
   const b64 = data?.data?.[0]?.b64_json;
-  if (!b64) return { status: 502, body: { error: "ไม่ได้รับภาพกลับจาก OpenAI" } };
-  return { status: 200, body: { image: `data:image/png;base64,${b64}`, usedPrompt: finalPrompt } };
+  if (!b64) throw new AppError(502, "ไม่ได้รับภาพกลับจาก OpenAI");
+  return { image: `data:image/png;base64,${b64}`, usedPrompt: finalPrompt };
 }

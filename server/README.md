@@ -3,6 +3,18 @@
 Backend สำหรับระบบรายงานหน้างาน — เสิร์ฟหน้าเว็บ + เก็บรายงานบนเซิร์ฟเวอร์ของคุณเอง + พร็อกซี AI
 (เหมาะกับการรันบนคลาวด์/โดเมนของคุณ ด้วย Docker)
 
+> โครงสร้างแบบ 3 เทียร์ (API → Business → Data) อธิบายไว้ที่ [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
+>
+> ```
+> server/
+>   server.js            bootstrap (composition root)
+>   config.js            ค่าจาก env รวมศูนย์
+>   api/                 API layer — routes, controllers, middleware
+>   business/            Business layer — services (auth, reports, ai)
+>   db/                  Data layer — repositories + adapter (json/postgres)
+>   util/AppError.js     error ที่พก HTTP status
+> ```
+
 ## ฟีเจอร์
 - เสิร์ฟ frontend (`index.html`) ที่ `/`
 - สมัคร/เข้าสู่ระบบ ด้วย JWT — `POST /api/auth/register`, `POST /api/auth/login`

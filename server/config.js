@@ -1,0 +1,18 @@
+// ค่าตั้งต้นจาก environment (รวมศูนย์ที่เดียว)
+import path from "path";
+
+export const config = {
+  port: process.env.PORT || 8080,
+  jwtSecret: process.env.JWT_SECRET || "change-me-in-production",
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "30d",
+  dataDir: process.env.DATA_DIR || path.join(process.cwd(), "data"),
+  dbDriver: process.env.DB_DRIVER || "json", // "json" (default) | future: "postgres"
+  openaiApiKey: process.env.OPENAI_API_KEY || "",
+  bodyLimit: process.env.BODY_LIMIT || "30mb"
+};
+
+export function assertProductionConfig() {
+  if (config.jwtSecret === "change-me-in-production") {
+    console.warn("⚠️  JWT_SECRET ยังเป็นค่าเริ่มต้น — ตั้งค่าใน .env ก่อนใช้งานจริง");
+  }
+}
