@@ -192,6 +192,7 @@ textarea.prompt:focus{outline:none}
   <nav class="modebar">
     <button class="mode-btn active" data-mode="design">🎨 ออกแบบ / สร้างภาพ</button>
     <button class="mode-btn" data-mode="boq">📊 ประมาณราคา BOQ</button>
+    <button class="mode-btn" data-mode="report">📋 รายงานหน้างาน</button>
     <button class="mode-btn" data-mode="save">💾 บันทึกงาน</button>
     <button class="mode-btn" data-mode="help">📖 วิธีใช้</button>
   </nav>
@@ -790,6 +791,126 @@ textarea.prompt:focus{outline:none}
         <div class="badges"><span class="badge gold">📄 ตารางเท่านั้น</span><span class="badge red">🇬🇧 English</span></div>
       </div>
       <textarea id="txtPromptBOQ" class="prompt" readonly placeholder="กดปุ่ม 'สร้างคำสั่ง BOQ' เพื่อสร้างคำสั่ง..."></textarea>
+    </div>
+  </section>
+
+  <!-- ===== MODE: REPORT (รายงานหน้างาน) ===== -->
+  <section id="mode-report" class="mode">
+    <style>
+      #mode-report .rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      @media(max-width:820px){#mode-report .rep-grid{grid-template-columns:1fr}}
+      #mode-report .line-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+      #mode-report .line-row{display:flex;gap:8px;align-items:center}
+      #mode-report .line-row input{flex:1}
+      #mode-report .line-row .del{flex:0 0 auto;width:38px;padding:8px 0;text-align:center}
+      #mode-report .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:10px}
+      #mode-report .photo-cell{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--surface-2)}
+      #mode-report .photo-cell img{width:100%;height:100%;object-fit:cover;display:block}
+      #mode-report .photo-cell .rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;
+        border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1}
+      #mode-report .report-preview{white-space:pre-wrap;font-family:inherit;line-height:1.7;font-size:14px}
+      #mode-report .ai-box{white-space:pre-wrap;line-height:1.7;font-size:14px;min-height:60px}
+      #mode-report .status-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    </style>
+
+    <div class="card">
+      <h3>📋 ระบบรายงานความก้าวหน้าหน้างาน (Site Progress Report)</h3>
+      <div class="note tip">กรอกข้อมูลหน้างานประจำวัน → ระบบจะสร้าง <strong>รายงาน Executive Summary</strong> พร้อมแฮชแท็ก สำหรับส่งผู้ควบคุมงาน/ลงโซเชียลได้ทันที — แนบรูปแล้วให้ <strong>AI ช่วยตรวจงานตามแบบและประเมินแผน</strong> ได้</div>
+    </div>
+
+    <div class="rep-grid">
+      <!-- ซ้าย: ฟอร์มกรอกข้อมูล -->
+      <div>
+        <div class="card">
+          <h3>🏗️ ข้อมูลโครงการ</h3>
+          <div class="field"><label>ชื่อโครงการ</label><input type="text" id="rpProject" placeholder="ก่อสร้างบ้านพักอาศัยชั้นเดียว 4 หลัง"></div>
+          <div class="row-2">
+            <div class="field"><label>พิกัด / สถานที่</label><input type="text" id="rpLocation" placeholder="อ.บางเลน จ.นครปฐม"></div>
+            <div class="field"><label>วันที่รายงาน</label><input type="text" id="rpDate" placeholder="12/06/2569"></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>วันที่ (Day)</label><input type="number" id="rpDay" min="1" value="1"></div>
+            <div class="field"><label>ทีมงาน / ผู้รับเหมา</label><input type="text" id="rpTeam" placeholder="ทีมงานต่อบัณฑิต"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>✅ ความก้าวหน้าประจำวัน</h3>
+          <div class="line-list" id="rpProgressList"></div>
+          <button class="btn ghost" id="rpAddProgress" style="margin-top:8px">➕ เพิ่มรายการ</button>
+        </div>
+
+        <div class="card">
+          <h3>⚠️ ปัญหา / อุปสรรค</h3>
+          <div class="line-list" id="rpIssueList"></div>
+          <button class="btn ghost" id="rpAddIssue" style="margin-top:8px">➕ เพิ่มรายการ</button>
+        </div>
+
+        <div class="card">
+          <h3>🔹 แผนงานวันถัดไป</h3>
+          <div class="line-list" id="rpPlanList"></div>
+          <button class="btn ghost" id="rpAddPlan" style="margin-top:8px">➕ เพิ่มรายการ</button>
+        </div>
+
+        <div class="card">
+          <h3>📈 สถานะโครงการ (สรุป)</h3>
+          <div class="field"><textarea id="rpStatus" rows="4" placeholder="สรุปภาพรวมสถานะโครงการ... (เว้นว่างไว้แล้วกดปุ่ม AI ช่วยร่างได้)"></textarea></div>
+          <div class="field"><label>แฮชแท็ก (คั่นด้วยช่องว่าง)</label><input type="text" id="rpTags" placeholder="#โครงการบ้าน4หลัง #บางเลน #รายงานหน้างาน"></div>
+        </div>
+      </div>
+
+      <!-- ขวา: รูป + AI + ผลลัพธ์ -->
+      <div>
+        <div class="card">
+          <h3>📷 รูปภาพหน้างาน</h3>
+          <div class="note tip">แนบรูปได้หลายรูป (ใช้ประกอบรายงาน และให้ AI ตรวจงานตามแบบ)</div>
+          <input type="file" id="rpPhotos" accept="image/*" multiple style="display:none">
+          <button class="btn blue" id="rpAddPhoto" style="margin-top:8px">📷 เพิ่มรูป</button>
+          <div class="photo-grid" id="rpPhotoGrid"></div>
+        </div>
+
+        <div class="card">
+          <h3>🤖 AI ช่วยงาน</h3>
+          <div class="note tip">ใช้ AI (วิเคราะห์ภาพ) ช่วย: ① ร่างสรุปสถานะ ② ตรวจงานตามหลักการก่อสร้าง ③ ประเมิน/เตือนความเสี่ยงของแผน</div>
+          <div class="btn-group" style="border-top:none;padding-top:0">
+            <button class="btn primary" id="rpAIDraft">✍️ AI ร่างสรุปสถานะ</button>
+            <button class="btn primary" id="rpAIInspect">🔍 AI ตรวจงานตามแบบ</button>
+            <button class="btn primary" id="rpAIPlan">📐 AI ประเมินแผนงาน</button>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>แบบก่อสร้าง / สเปคอ้างอิง (ใส่ข้อความ เพื่อให้ AI ตรวจเทียบ — ไม่ใส่ก็ได้)</label>
+            <textarea id="rpSpec" rows="3" placeholder="เช่น ฐานราก F1 ขนาด 1.50×1.50 ม. เหล็กเสริม DB16@15ซม., ตอม่อ 0.20×0.20 ม. เหล็กยืน 4-DB16..."></textarea>
+          </div>
+          <div id="rpAIOut" class="note ai-box" style="margin-top:10px;display:none"></div>
+        </div>
+
+        <div class="card">
+          <h3>📄 รายงานที่สร้าง</h3>
+          <div class="btn-group" style="border-top:none;padding-top:0">
+            <button class="btn primary" id="rpGenerate">📝 สร้างรายงาน</button>
+            <button class="btn blue" id="rpCopy">📋 คัดลอก</button>
+            <button class="btn ghost" id="rpDownload">⬇️ ดาวน์โหลด .txt</button>
+            <button class="btn ghost" id="rpSave">💾 บันทึกรายงาน</button>
+          </div>
+          <div class="out" style="margin-top:10px">
+            <div class="out-head">
+              <span>📋 Executive Summary</span>
+              <div class="status-badges"><span class="badge gold">พร้อมส่ง</span></div>
+            </div>
+            <div id="rpPreview" class="report-preview" style="min-height:120px;padding:6px 2px">กดปุ่ม “📝 สร้างรายงาน” เพื่อสร้างรายงาน…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🗂️ รายงานที่บันทึกไว้</h3>
+          <div class="field"><select id="rpHistory"></select></div>
+          <div class="btn-group" style="border-top:none;padding-top:0">
+            <button class="btn blue" id="rpLoad">📥 เรียกคืน</button>
+            <button class="btn danger" id="rpDelete">🗑️ ลบ</button>
+          </div>
+          <div class="note tip" id="rpHistStat" style="margin-top:8px">ยังไม่มีรายงานบันทึกไว้</div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2440,6 +2561,7 @@ function setMode(mode){
   document.querySelectorAll(".mode").forEach(s=>s.classList.toggle("active", s.id==="mode-"+mode));
   if(mode==="boq"){ try{ renderPriceTable(document.getElementById("priceSearch")?document.getElementById("priceSearch").value:""); }catch(e){} }
   if(mode==="save"){ try{ refreshDBUI(); }catch(e){} }
+  if(mode==="report"){ try{ window.__initReportMode && window.__initReportMode(); }catch(e){} }
   window.scrollTo({top:0,behavior:"smooth"});
 }
 document.addEventListener("DOMContentLoaded", function(){
@@ -2449,6 +2571,248 @@ document.addEventListener("DOMContentLoaded", function(){
   const dl=document.getElementById("btnDownloadBOQ");
   if(dl) dl.addEventListener("click",()=>{ const t=document.getElementById("txtPromptBOQ").value; if(!t){toast("ยังไม่มีคำสั่ง BOQ","error");return;} downloadText("BOQ_prompt.txt", t); });
 });
+
+/* =================== MODE: รายงานหน้างาน (Site Progress Report) =================== */
+(function(){
+  const g = id => document.getElementById(id);
+  const REPORT_KEY = "siteReports_v1";
+  const state = { photos: [], lastReport: "" };
+
+  const DEFAULT_PROGRESS = ["วัสดุเหล็กและอุปกรณ์หลักเข้าหน้างานเรียบร้อย"];
+  const DEFAULT_ISSUE = ["มีฝนตกหนักในช่วงเช้า ส่งผลให้การทำงานภาคสนามล่าช้า"];
+  const DEFAULT_PLAN = ["ตรวจสอบระดับและแนวอ้างอิงก่อนเริ่มงานติดตั้งเหล็กโครงสร้าง"];
+
+  function addLine(listId, value){
+    const list = g(listId); if(!list) return;
+    const row = document.createElement("div");
+    row.className = "line-row";
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.value = value || "";
+    inp.placeholder = "พิมพ์รายละเอียด…";
+    const del = document.createElement("button");
+    del.className = "btn ghost del"; del.textContent = "✕";
+    del.addEventListener("click", () => row.remove());
+    row.appendChild(inp); row.appendChild(del);
+    list.appendChild(row);
+    return inp;
+  }
+  function readLines(listId){
+    return Array.from(g(listId).querySelectorAll("input"))
+      .map(i => i.value.trim()).filter(Boolean);
+  }
+  function setLines(listId, arr){
+    g(listId).innerHTML = "";
+    (arr && arr.length ? arr : [""]).forEach(v => addLine(listId, v));
+  }
+
+  /* ---------- รูปภาพ ---------- */
+  function renderPhotos(){
+    const grid = g("rpPhotoGrid"); if(!grid) return;
+    grid.innerHTML = "";
+    state.photos.forEach((src, idx) => {
+      const cell = document.createElement("div");
+      cell.className = "photo-cell";
+      const img = document.createElement("img"); img.src = src;
+      const rm = document.createElement("button");
+      rm.className = "rm"; rm.textContent = "✕";
+      rm.addEventListener("click", () => { state.photos.splice(idx,1); renderPhotos(); });
+      cell.appendChild(img); cell.appendChild(rm);
+      grid.appendChild(cell);
+    });
+  }
+  function compressImage(file, maxDim){
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const im = new Image();
+        im.onload = () => {
+          let { width:w, height:h } = im;
+          const scale = Math.min(1, maxDim / Math.max(w, h));
+          w = Math.round(w*scale); h = Math.round(h*scale);
+          const cv = document.createElement("canvas");
+          cv.width = w; cv.height = h;
+          cv.getContext("2d").drawImage(im, 0, 0, w, h);
+          resolve(cv.toDataURL("image/jpeg", 0.82));
+        };
+        im.onerror = () => resolve(e.target.result);
+        im.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function handlePhotoFiles(files){
+    for(const f of files){
+      if(!f.type.startsWith("image/")) continue;
+      const dataUrl = await compressImage(f, 1280);
+      state.photos.push(dataUrl);
+    }
+    renderPhotos();
+  }
+
+  /* ---------- สร้างรายงาน ---------- */
+  function collect(){
+    return {
+      project: g("rpProject").value.trim(),
+      location: g("rpLocation").value.trim(),
+      date: g("rpDate").value.trim(),
+      day: g("rpDay").value.trim(),
+      team: g("rpTeam").value.trim(),
+      progress: readLines("rpProgressList"),
+      issues: readLines("rpIssueList"),
+      plan: readLines("rpPlanList"),
+      status: g("rpStatus").value.trim(),
+      tags: g("rpTags").value.trim()
+    };
+  }
+  function buildReport(d){
+    const L = [];
+    L.push("📋 รายงานความก้าวหน้าหน้างาน (Executive Summary)");
+    if(d.project) L.push("โครงการ: " + d.project);
+    if(d.location) L.push("พิกัด: " + d.location);
+    const dateLine = [d.date ? "วันที่รายงาน: " + d.date : "", d.day ? "(Day " + d.day + ")" : ""].filter(Boolean).join(" ");
+    if(dateLine) L.push(dateLine);
+    L.push("");
+    L.push("ความก้าวหน้าประจำวัน");
+    (d.progress.length?d.progress:["—"]).forEach(x => L.push("✅ " + x));
+    L.push("");
+    L.push("ปัญหา/อุปสรรค");
+    (d.issues.length?d.issues:["ไม่มี"]).forEach(x => L.push("⚠️ " + x));
+    L.push("");
+    L.push("แผนงานวันถัดไป");
+    (d.plan.length?d.plan:["—"]).forEach(x => L.push("🔹 " + x));
+    L.push("");
+    L.push("สถานะโครงการ");
+    L.push("📈 " + (d.status || "—"));
+    if(d.team){ L.push(""); L.push("ทีมงาน: " + d.team); }
+    if(d.tags){ L.push(""); L.push(d.tags); }
+    return L.join("\n");
+  }
+  function generateReport(){
+    const d = collect();
+    if(!d.project && !d.progress.length){ toast("กรอกข้อมูลโครงการ/ความก้าวหน้าก่อน","error"); return; }
+    state.lastReport = buildReport(d);
+    g("rpPreview").textContent = state.lastReport;
+    toast("📝 สร้างรายงานแล้ว");
+  }
+
+  /* ---------- AI วิเคราะห์ ---------- */
+  async function callAI(taskMode, btn){
+    const out = g("rpAIOut");
+    const d = collect();
+    const reportText = buildReport(d);
+    const spec = g("rpSpec").value.trim();
+    out.style.display = "block";
+    out.textContent = "⏳ กำลังให้ AI วิเคราะห์…";
+    const old = btn.textContent; btn.disabled = true; btn.textContent = "⏳ กำลังประมวลผล…";
+    try{
+      const base = (g("rpBackend") && g("rpBackend").value.trim()) || "";
+      const r = await fetch((base || "") + "/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: taskMode, reportText, spec, images: state.photos.slice(0, 6) })
+      });
+      const data = await r.json();
+      if(!r.ok){ out.textContent = "❌ " + (data.error || "เรียก AI ไม่สำเร็จ"); return; }
+      const text = (data.text || "").trim();
+      if(!text){ out.textContent = "❌ ไม่ได้รับผลลัพธ์จาก AI"; return; }
+      if(taskMode === "draft"){
+        g("rpStatus").value = text;
+        out.textContent = "✍️ ร่างสรุปสถานะแล้ว (ใส่ลงช่อง 'สถานะโครงการ' ให้อัตโนมัติ)\n\n" + text;
+        toast("✍️ AI ร่างสรุปให้แล้ว");
+      } else {
+        out.textContent = text;
+        toast("🤖 AI วิเคราะห์เสร็จ");
+      }
+    }catch(e){
+      out.textContent = "❌ เชื่อมต่อ AI ไม่สำเร็จ: " + (e.message || e) + "\n(ต้อง deploy บน Vercel ที่ตั้งค่า OPENAI_API_KEY แล้ว)";
+    }finally{
+      btn.disabled = false; btn.textContent = old;
+    }
+  }
+
+  /* ---------- บันทึก / ประวัติ ---------- */
+  function loadStore(){ try{ return JSON.parse(localStorage.getItem(REPORT_KEY) || "[]"); }catch(e){ return []; } }
+  function saveStore(arr){ localStorage.setItem(REPORT_KEY, JSON.stringify(arr)); }
+  function refreshHistory(){
+    const sel = g("rpHistory"); const arr = loadStore();
+    sel.innerHTML = "";
+    if(!arr.length){
+      g("rpHistStat").textContent = "ยังไม่มีรายงานบันทึกไว้";
+      const o = document.createElement("option"); o.textContent = "— ยังไม่มี —"; sel.appendChild(o);
+      return;
+    }
+    arr.forEach((it, i) => {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = (it.date || "?") + " · Day " + (it.day||"-") + " · " + (it.project || "ไม่ระบุชื่อ").slice(0,30);
+      sel.appendChild(o);
+    });
+    g("rpHistStat").textContent = "มีรายงานบันทึกไว้ " + arr.length + " รายการ";
+  }
+  function saveReport(){
+    const d = collect();
+    d.photos = state.photos.slice();
+    d.savedAt = Date.now();
+    const arr = loadStore();
+    arr.unshift(d);
+    saveStore(arr.slice(0, 100));
+    refreshHistory();
+    toast("💾 บันทึกรายงานแล้ว");
+  }
+  function loadReport(){
+    const arr = loadStore(); const i = parseInt(g("rpHistory").value, 10);
+    if(isNaN(i) || !arr[i]){ toast("เลือกรายงานก่อน","error"); return; }
+    const d = arr[i];
+    g("rpProject").value = d.project||""; g("rpLocation").value = d.location||"";
+    g("rpDate").value = d.date||""; g("rpDay").value = d.day||""; g("rpTeam").value = d.team||"";
+    g("rpStatus").value = d.status||""; g("rpTags").value = d.tags||"";
+    setLines("rpProgressList", d.progress); setLines("rpIssueList", d.issues); setLines("rpPlanList", d.plan);
+    state.photos = (d.photos||[]).slice(); renderPhotos();
+    generateReport();
+    toast("📥 เรียกคืนรายงานแล้ว");
+  }
+  function deleteReport(){
+    const arr = loadStore(); const i = parseInt(g("rpHistory").value, 10);
+    if(isNaN(i) || !arr[i]){ toast("เลือกรายงานก่อน","error"); return; }
+    arr.splice(i,1); saveStore(arr); refreshHistory();
+    toast("🗑️ ลบแล้ว");
+  }
+
+  let inited = false;
+  function init(){
+    if(inited) return; inited = true;
+    // เติมค่าเริ่มต้น
+    setLines("rpProgressList", DEFAULT_PROGRESS);
+    setLines("rpIssueList", DEFAULT_ISSUE);
+    setLines("rpPlanList", DEFAULT_PLAN);
+    const today = new Date();
+    const be = today.getFullYear() + 543;
+    g("rpDate").value = String(today.getDate()).padStart(2,"0") + "/" + String(today.getMonth()+1).padStart(2,"0") + "/" + be;
+    g("rpTags").placeholder = "#รายงานหน้างาน #งานโครงสร้าง";
+
+    g("rpAddProgress").addEventListener("click", () => addLine("rpProgressList").focus());
+    g("rpAddIssue").addEventListener("click", () => addLine("rpIssueList").focus());
+    g("rpAddPlan").addEventListener("click", () => addLine("rpPlanList").focus());
+
+    g("rpAddPhoto").addEventListener("click", () => g("rpPhotos").click());
+    g("rpPhotos").addEventListener("change", e => { handlePhotoFiles(Array.from(e.target.files)); e.target.value=""; });
+
+    g("rpGenerate").addEventListener("click", generateReport);
+    g("rpCopy").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } copyToClipboard(state.lastReport); });
+    g("rpDownload").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } downloadText("รายงานหน้างาน_" + (g("rpDate").value||"").replace(/\//g,"-") + ".txt", state.lastReport); });
+    g("rpSave").addEventListener("click", saveReport);
+
+    g("rpAIDraft").addEventListener("click", e => callAI("draft", e.currentTarget));
+    g("rpAIInspect").addEventListener("click", e => callAI("inspect", e.currentTarget));
+    g("rpAIPlan").addEventListener("click", e => callAI("plan", e.currentTarget));
+
+    g("rpLoad").addEventListener("click", loadReport);
+    g("rpDelete").addEventListener("click", deleteReport);
+
+    refreshHistory();
+  }
+  window.__initReportMode = init;
+})();
 
 </script>
 </body>
