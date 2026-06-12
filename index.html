@@ -181,18 +181,19 @@ textarea.prompt:focus{outline:none}
 :root{
   color-scheme: light;
   /* base */
-  --bg:#e8ecf7; --paper:var(--surface-strong);
+  --bg:#eaf3fc; --paper:var(--surface-strong);
   --surface-strong:#ffffff;
-  --surface:rgba(255,255,255,.72);
-  --surface-2:rgba(255,255,255,.5);
-  --input-bg:rgba(255,255,255,.66);
-  --ink:#16203a; --ink-soft:#5a657d;
-  --line:rgba(22,32,58,.10); --line-2:rgba(22,32,58,.06);
-  /* accents */
-  --accent:#6366f1; --accent-2:#8b5cf6; --accent-3:#14b8a6;
-  --accent-d:#4338ca; --accent-soft:rgba(99,102,241,.13);
-  --grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#14b8a6 100%);
-  --grad-2:linear-gradient(135deg,#6366f1,#8b5cf6);
+  --surface:rgba(255,255,255,.78);
+  --surface-2:rgba(255,255,255,.56);
+  --input-bg:rgba(255,255,255,.72);
+  --ink:#1c2c40; --ink-soft:#5b6a7e;
+  --line:rgba(28,44,64,.10); --line-2:rgba(28,44,64,.055);
+  /* accents: น้ำเงินอ่อน + เหลือง */
+  --accent:#3b9fe3; --accent-2:#f6c945; --accent-3:#7cc6f2;
+  --accent-d:#1f6fb0; --accent-soft:rgba(59,159,227,.14);
+  --yellow:#f6c945; --yellow-soft:rgba(246,201,69,.20); --pill-ink:#8a6608;
+  --grad:linear-gradient(135deg,#3b9fe3 0%,#7cc6f2 46%,#f6c945 100%);
+  --grad-2:linear-gradient(135deg,#48a7e7,#7cc6f2);
   /* semantic (translucent → ใช้ได้ทั้ง light/dark) */
   --teal:#14b8a6; --teal-soft:rgba(20,184,166,.14);
   --amber:#f59e0b; --amber-soft:rgba(245,158,11,.15);
@@ -207,43 +208,44 @@ textarea.prompt:focus{outline:none}
   --blur:saturate(180%) blur(18px);
   --shadow-sm:0 1px 2px rgba(20,28,58,.05),0 10px 24px -18px rgba(31,38,90,.45);
   --shadow:0 2px 8px rgba(20,28,58,.06),0 28px 56px -28px rgba(31,38,90,.5);
-  --ring:0 0 0 4px rgba(99,102,241,.22);
+  --ring:0 0 0 4px rgba(59,159,227,.26);
 }
 html[data-theme="dark"]{
   color-scheme: dark;
-  --bg:#080b16; --surface-strong:#141a2b;
-  --surface:rgba(24,30,48,.62); --surface-2:rgba(34,42,64,.5);
+  --bg:#0a121d; --surface-strong:#121b29;
+  --surface:rgba(20,30,46,.62); --surface-2:rgba(28,42,60,.5);
   --input-bg:rgba(255,255,255,.05);
-  --ink:#e9edf7; --ink-soft:#9aa6c0;
+  --ink:#e9f1fa; --ink-soft:#9bb0c6;
   --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.055);
-  --accent:#818cf8; --accent-2:#a78bfa; --accent-3:#2dd4bf;
-  --accent-d:#c7d2fe; --accent-soft:rgba(129,140,248,.18);
-  --grad:linear-gradient(135deg,#818cf8 0%,#a78bfa 50%,#2dd4bf 100%);
-  --grad-2:linear-gradient(135deg,#818cf8,#a78bfa);
+  --accent:#5cb4ee; --accent-2:#f6cf5a; --accent-3:#8fd0f5;
+  --accent-d:#bfe2fb; --accent-soft:rgba(92,180,238,.20);
+  --yellow:#f6cf5a; --yellow-soft:rgba(246,207,90,.16); --pill-ink:#f6cf5a;
+  --grad:linear-gradient(135deg,#5cb4ee 0%,#8fd0f5 46%,#f6cf5a 100%);
+  --grad-2:linear-gradient(135deg,#5cb4ee,#8fd0f5);
   --shadow-sm:0 1px 2px rgba(0,0,0,.4),0 12px 28px -20px rgba(0,0,0,.8);
   --shadow:0 2px 10px rgba(0,0,0,.45),0 32px 64px -28px rgba(0,0,0,.85);
-  --ring:0 0 0 4px rgba(129,140,248,.28);
+  --ring:0 0 0 4px rgba(92,180,238,.30);
 }
 
 /* ---- background mesh (2026) ---- */
 body{
   background:
-    radial-gradient(60% 50% at 12% 8%, rgba(99,102,241,.22), transparent 60%),
-    radial-gradient(55% 45% at 92% 12%, rgba(20,184,166,.20), transparent 60%),
-    radial-gradient(50% 50% at 75% 90%, rgba(139,92,246,.18), transparent 60%),
+    radial-gradient(60% 50% at 12% 8%, rgba(59,159,227,.24), transparent 60%),
+    radial-gradient(55% 45% at 92% 12%, rgba(246,201,69,.24), transparent 60%),
+    radial-gradient(50% 50% at 75% 90%, rgba(124,198,242,.22), transparent 60%),
     var(--bg);
   background-attachment:fixed;
 }
 html[data-theme="dark"] body{
   background:
-    radial-gradient(60% 50% at 12% 8%, rgba(99,102,241,.20), transparent 60%),
-    radial-gradient(55% 45% at 92% 12%, rgba(20,184,166,.16), transparent 60%),
-    radial-gradient(50% 50% at 75% 90%, rgba(139,92,246,.18), transparent 60%),
+    radial-gradient(60% 50% at 12% 8%, rgba(92,180,238,.20), transparent 60%),
+    radial-gradient(55% 45% at 92% 12%, rgba(246,207,90,.16), transparent 60%),
+    radial-gradient(50% 50% at 75% 90%, rgba(143,208,245,.18), transparent 60%),
     var(--bg);
   background-attachment:fixed;
 }
 .app{max-width:1200px;padding:26px 20px 80px}
-::selection{background:rgba(99,102,241,.28)}
+::selection{background:rgba(59,159,227,.30)}
 *{scrollbar-width:thin;scrollbar-color:var(--accent) transparent}
 *::-webkit-scrollbar{width:10px;height:10px}
 *::-webkit-scrollbar-thumb{background:var(--accent-soft);border-radius:99px;border:2px solid transparent;background-clip:padding-box}
@@ -305,7 +307,7 @@ html[data-theme="dark"] .field select option{background:var(--surface-strong);co
 .note code{background:var(--surface-2);color:var(--ink)}
 
 /* ---- badges / pills ---- */
-.pill{background:var(--accent-soft);color:var(--accent-d);border-color:transparent;font-weight:700;
+.pill{background:var(--yellow-soft);color:var(--pill-ink);border-color:transparent;font-weight:700;
   padding:6px 13px}
 .badge{border-radius:999px;font-weight:700;background:var(--surface-2);border-color:var(--line)}
 
