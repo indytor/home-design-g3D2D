@@ -1,0 +1,17 @@
+services:
+  site-report:
+    build: .
+    container_name: site-report
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DATA_DIR=/data
+      - JWT_SECRET=${JWT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - site-report-data:/data
+
+volumes:
+  site-report-data:

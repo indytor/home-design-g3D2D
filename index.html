@@ -843,6 +843,29 @@ textarea.prompt:focus{outline:none}
       <div class="note tip" id="rpDashNote" style="margin-top:8px">ยังไม่มีข้อมูล — กรอกรายงานแล้วกด “💾 บันทึกรายงาน” เพื่อสะสมข้อมูลภาพรวม</div>
     </div>
 
+    <div class="card" id="rpAccount">
+      <h3>☁️ บัญชี & ซิงค์คลาวด์</h3>
+      <div class="note tip">เข้าสู่ระบบเพื่อเก็บรายงานบนเซิร์ฟเวอร์ของคุณ (ใช้งานเมื่อเปิดผ่าน backend ที่ติดตั้งเอง) — เปิดผ่านไฟล์ตรงๆ จะใช้แค่บันทึกในเครื่อง</div>
+      <div id="rpLoggedOut">
+        <div class="row-2">
+          <div class="field"><label>อีเมล</label><input type="email" id="rpEmail" placeholder="you@example.com"></div>
+          <div class="field"><label>รหัสผ่าน</label><input type="password" id="rpPass" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
+        </div>
+        <div class="btn-group" style="border-top:none;padding-top:0">
+          <button class="btn primary" id="rpLogin">🔑 เข้าสู่ระบบ</button>
+          <button class="btn ghost" id="rpRegister">📝 สมัครสมาชิก</button>
+        </div>
+      </div>
+      <div id="rpLoggedIn" style="display:none">
+        <div class="note ok" id="rpAccountStat">เข้าสู่ระบบแล้ว</div>
+        <div class="btn-group" style="border-top:none;padding-top:0">
+          <button class="btn primary" id="rpSyncUp">⬆️ อัปรายงานขึ้นคลาวด์</button>
+          <button class="btn blue" id="rpSyncDown">⬇️ ดึงจากคลาวด์</button>
+          <button class="btn ghost" id="rpLogout">🚪 ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+
     <div class="rep-grid">
       <!-- ซ้าย: ฟอร์มกรอกข้อมูล -->
       <div>
@@ -2966,6 +2989,55 @@ document.addEventListener("DOMContentLoaded", function(){
     toast("🖨️ เปิดหน้าพิมพ์ — เลือก “บันทึกเป็น PDF”");
   }
 
+  /* ---------- บัญชี & ซิงค์คลาวด์ ---------- */
+  const TOKEN_KEY = "srToken", EMAIL_KEY = "srEmail";
+  function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+  function refreshAuthUI(){
+    const t = token();
+    g("rpLoggedOut").style.display = t ? "none" : "block";
+    g("rpLoggedIn").style.display = t ? "block" : "none";
+    if(t) g("rpAccountStat").textContent = "เข้าสู่ระบบแล้ว: " + (localStorage.getItem(EMAIL_KEY) || "");
+  }
+  async function authRequest(pathName){
+    const email = g("rpEmail").value.trim(), password = g("rpPass").value;
+    if(!email || !password){ toast("กรอกอีเมลและรหัสผ่าน","error"); return; }
+    try{
+      const r = await fetch("/api/auth/" + pathName, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await r.json();
+      if(!r.ok){ toast(data.error || "ไม่สำเร็จ","error"); return; }
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(EMAIL_KEY, data.email);
+      g("rpPass").value = "";
+      refreshAuthUI();
+      toast("✅ " + (pathName === "register" ? "สมัครและเข้าสู่ระบบแล้ว" : "เข้าสู่ระบบแล้ว"));
+    }catch(e){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (ต้องเปิดผ่าน backend)","error"); }
+  }
+  function logout(){ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(EMAIL_KEY); refreshAuthUI(); toast("ออกจากระบบแล้ว"); }
+  async function syncUp(){
+    if(!token()) return;
+    try{
+      const r = await fetch("/api/reports", {
+        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token() },
+        body: JSON.stringify({ reports: loadStore() })
+      });
+      const data = await r.json();
+      if(!r.ok){ toast(data.error || "อัปไม่สำเร็จ","error"); return; }
+      toast("⬆️ อัปขึ้นคลาวด์แล้ว " + (data.count||0) + " รายงาน");
+    }catch(e){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้","error"); }
+  }
+  async function syncDown(){
+    if(!token()) return;
+    try{
+      const r = await fetch("/api/reports", { headers: { "Authorization": "Bearer " + token() } });
+      const data = await r.json();
+      if(!r.ok){ toast(data.error || "ดึงไม่สำเร็จ","error"); return; }
+      if(Array.isArray(data)){ saveStore(data); refreshHistory(); updateDashboard(); toast("⬇️ ดึงจากคลาวด์แล้ว " + data.length + " รายงาน"); }
+    }catch(e){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้","error"); }
+  }
+
   let inited = false;
   function init(){
     if(inited) return; inited = true;
@@ -3000,6 +3072,13 @@ document.addEventListener("DOMContentLoaded", function(){
 
     g("rpLoad").addEventListener("click", loadReport);
     g("rpDelete").addEventListener("click", deleteReport);
+
+    g("rpLogin").addEventListener("click", () => authRequest("login"));
+    g("rpRegister").addEventListener("click", () => authRequest("register"));
+    g("rpLogout").addEventListener("click", logout);
+    g("rpSyncUp").addEventListener("click", syncUp);
+    g("rpSyncDown").addEventListener("click", syncDown);
+    refreshAuthUI();
 
     refreshHistory();
     updateDashboard();
