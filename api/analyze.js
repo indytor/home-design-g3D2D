@@ -35,24 +35,32 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "ยังไม่ได้ตั้งค่า OPENAI_API_KEY บนเซิร์ฟเวอร์" });
   }
   try {
-    const { task = "inspect", reportText = "", spec = "", images = [] } = req.body || {};
+    const { task = "inspect", reportText = "", spec = "", images = [], planImages = [] } = req.body || {};
     const system = SYSTEM[task] || SYSTEM.inspect;
+    const siteImgs = (Array.isArray(images) ? images : []).filter(s => typeof s === "string" && s.startsWith("data:image")).slice(0, 6);
+    const planImgs = (Array.isArray(planImages) ? planImages : []).filter(s => typeof s === "string" && s.startsWith("data:image")).slice(0, 4);
 
     // ประกอบข้อความบริบท
     let ctx = "ข้อมูลรายงานหน้างาน:\n" + (reportText || "(ไม่มี)");
     if (spec && spec.trim()) {
-      ctx += "\n\nแบบ/สเปคอ้างอิงสำหรับตรวจเทียบ:\n" + spec.trim();
+      ctx += "\n\nแบบ/สเปคอ้างอิง (ข้อความ) สำหรับตรวจเทียบ:\n" + spec.trim();
     }
-    if (Array.isArray(images) && images.length) {
-      ctx += "\n\n(แนบรูปถ่ายหน้างาน " + images.length + " รูปด้านล่าง)";
+    if (planImgs.length) {
+      ctx += "\n\n*** มีรูป 'แบบก่อสร้าง' แนบมา " + planImgs.length + " หน้า (จะส่งก่อน) ตามด้วยรูป 'ถ่ายหน้างานจริง' " + siteImgs.length + " รูป ***\n" +
+        "ให้เปรียบเทียบงานจริงในรูปหน้างานกับแบบก่อสร้างที่แนบ ว่าตรงตามแบบหรือไม่ (ขนาด ตำแหน่ง การเสริมเหล็ก ระยะ ฯลฯ) และชี้จุดที่ไม่ตรง/ต้องตรวจสอบ";
+    } else if (siteImgs.length) {
+      ctx += "\n\n(แนบรูปถ่ายหน้างาน " + siteImgs.length + " รูปด้านล่าง)";
     }
 
-    // เนื้อหา user แบบ multimodal
+    // เนื้อหา user แบบ multimodal: ส่งรูปแบบก่อนแล้วตามด้วยรูปหน้างาน
     const content = [{ type: "text", text: ctx }];
-    (Array.isArray(images) ? images.slice(0, 6) : []).forEach(src => {
-      if (typeof src === "string" && src.startsWith("data:image")) {
-        content.push({ type: "image_url", image_url: { url: src } });
-      }
+    planImgs.forEach((src, i) => {
+      content.push({ type: "text", text: "แบบก่อสร้าง หน้า " + (i + 1) + ":" });
+      content.push({ type: "image_url", image_url: { url: src } });
+    });
+    siteImgs.forEach((src, i) => {
+      if (planImgs.length) content.push({ type: "text", text: "รูปถ่ายหน้างานจริง รูปที่ " + (i + 1) + ":" });
+      content.push({ type: "image_url", image_url: { url: src } });
     });
 
     const r = await fetch("https://api.openai.com/v1/chat/completions", {

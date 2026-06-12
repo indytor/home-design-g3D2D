@@ -910,6 +910,13 @@ textarea.prompt:focus{outline:none}
             <label>แบบก่อสร้าง / สเปคอ้างอิง (ใส่ข้อความ เพื่อให้ AI ตรวจเทียบ — ไม่ใส่ก็ได้)</label>
             <textarea id="rpSpec" rows="3" placeholder="เช่น ฐานราก F1 ขนาด 1.50×1.50 ม. เหล็กเสริม DB16@15ซม., ตอม่อ 0.20×0.20 ม. เหล็กยืน 4-DB16..."></textarea>
           </div>
+          <div class="field">
+            <label>📐 อัปโหลดแบบก่อสร้าง (PDF/รูป) — ให้ AI เทียบรูปหน้างานกับแบบ</label>
+            <input type="file" id="rpPlanFile" accept="image/*,application/pdf" multiple style="display:none">
+            <button class="btn ghost" id="rpAddPlan2" style="margin-top:4px">📎 เลือกไฟล์แบบ</button>
+            <span id="rpPlanStat" class="note tip" style="display:inline-block;margin-left:8px"></span>
+            <div class="photo-grid" id="rpPlanGrid"></div>
+          </div>
           <div id="rpAIOut" class="note ai-box" style="margin-top:10px;display:none"></div>
         </div>
 
@@ -2606,7 +2613,7 @@ document.addEventListener("DOMContentLoaded", function(){
 (function(){
   const g = id => document.getElementById(id);
   const REPORT_KEY = "siteReports_v1";
-  const state = { photos: [], lastReport: "" };
+  const state = { photos: [], planImages: [], lastReport: "" };
 
   const DEFAULT_PROGRESS = ["วัสดุเหล็กและอุปกรณ์หลักเข้าหน้างานเรียบร้อย"];
   const DEFAULT_ISSUE = ["มีฝนตกหนักในช่วงเช้า ส่งผลให้การทำงานภาคสนามล่าช้า"];
@@ -2679,6 +2686,75 @@ document.addEventListener("DOMContentLoaded", function(){
     renderPhotos();
   }
 
+  /* ---------- แบบก่อสร้าง (PDF/รูป) สำหรับให้ AI เทียบ ---------- */
+  function renderPlans(){
+    const grid = g("rpPlanGrid"); if(!grid) return;
+    grid.innerHTML = "";
+    state.planImages.forEach((src, idx) => {
+      const cell = document.createElement("div");
+      cell.className = "photo-cell";
+      const img = document.createElement("img"); img.src = src;
+      const rm = document.createElement("button");
+      rm.className = "rm"; rm.textContent = "✕";
+      rm.addEventListener("click", () => { state.planImages.splice(idx,1); renderPlans(); updatePlanStat(); });
+      cell.appendChild(img); cell.appendChild(rm);
+      grid.appendChild(cell);
+    });
+  }
+  function updatePlanStat(){
+    const el = g("rpPlanStat");
+    el.textContent = state.planImages.length ? ("แบบ " + state.planImages.length + " หน้า/รูป") : "";
+  }
+  let pdfjsLoading = null;
+  function loadPdfJs(){
+    if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if(pdfjsLoading) return pdfjsLoading;
+    pdfjsLoading = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      s.onload = () => {
+        try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(e){}
+        resolve(window.pdfjsLib);
+      };
+      s.onerror = () => reject(new Error("โหลดตัวอ่าน PDF ไม่สำเร็จ (ต้องมีอินเทอร์เน็ต)"));
+      document.head.appendChild(s);
+    });
+    return pdfjsLoading;
+  }
+  async function pdfToImages(file, maxPages){
+    const lib = await loadPdfJs();
+    const buf = await file.arrayBuffer();
+    const pdf = await lib.getDocument({ data: buf }).promise;
+    const out = [];
+    const pages = Math.min(pdf.numPages, maxPages || 4);
+    for(let p = 1; p <= pages; p++){
+      const page = await pdf.getPage(p);
+      const vp = page.getViewport({ scale: 1.6 });
+      const cv = document.createElement("canvas");
+      cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+      out.push(cv.toDataURL("image/jpeg", 0.85));
+    }
+    return out;
+  }
+  async function handlePlanFiles(files){
+    g("rpPlanStat").textContent = "⏳ กำลังประมวลผลแบบ…";
+    for(const f of files){
+      try{
+        if(f.type === "application/pdf"){
+          const imgs = await pdfToImages(f, 4);
+          state.planImages.push(...imgs);
+        } else if(f.type.startsWith("image/")){
+          state.planImages.push(await compressImage(f, 1600));
+        }
+      }catch(e){
+        toast(e.message || "อ่านไฟล์แบบไม่สำเร็จ", "error");
+      }
+    }
+    state.planImages = state.planImages.slice(0, 8);
+    renderPlans(); updatePlanStat();
+  }
+
   /* ---------- สร้างรายงาน ---------- */
   function collect(){
     return {
@@ -2743,7 +2819,7 @@ document.addEventListener("DOMContentLoaded", function(){
       const r = await fetch((base || "") + "/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task: taskMode, reportText, spec, images: state.photos.slice(0, 6) })
+        body: JSON.stringify({ task: taskMode, reportText, spec, images: state.photos.slice(0, 6), planImages: state.planImages.slice(0, 4) })
       });
       const data = await r.json();
       if(!r.ok){ out.textContent = "❌ " + (data.error || "เรียก AI ไม่สำเร็จ"); return; }
@@ -2908,6 +2984,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
     g("rpAddPhoto").addEventListener("click", () => g("rpPhotos").click());
     g("rpPhotos").addEventListener("change", e => { handlePhotoFiles(Array.from(e.target.files)); e.target.value=""; });
+
+    g("rpAddPlan2").addEventListener("click", () => g("rpPlanFile").click());
+    g("rpPlanFile").addEventListener("change", e => { handlePlanFiles(Array.from(e.target.files)); e.target.value=""; });
 
     g("rpGenerate").addEventListener("click", generateReport);
     g("rpCopy").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } copyToClipboard(state.lastReport); });
