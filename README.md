@@ -31,6 +31,17 @@ docker compose up -d --build
 ได้: ล็อกอินผู้ใช้ (JWT), เก็บรายงานบนเซิร์ฟเวอร์, ซิงค์คลาวด์ (ปุ่ม ⬆️/⬇️ ในแท็บรายงาน), และพร็อกซี AI
 รายละเอียดทั้งหมดดูที่ [`server/README.md`](server/README.md)
 
+> โครงสร้าง backend เป็น **3 เทียร์** (API → Business → Data) ดู [`ARCHITECTURE.md`](ARCHITECTURE.md)
+
+## 🧩 Microservices (สเกลแยกส่วน)
+นอกจาก monolith แล้ว ยังมี stack แบบ **microservices** (gateway + auth + reports + ai) รันได้จริง:
+```bash
+cp .env.example .env
+docker compose -f docker-compose.microservices.yml up -d --build
+# เปิด http://<server>:8080
+```
+ออกแบบ: [`MICROSERVICES.md`](MICROSERVICES.md) · โค้ด/วิธีใช้: [`services/README.md`](services/README.md)
+
 ## ขั้นตอน Deploy บน Vercel (ฟรี)
 
 ### 1) สมัคร OpenAI API + เติมเงิน + สร้าง key
