@@ -811,11 +811,36 @@ textarea.prompt:focus{outline:none}
       #mode-report .report-preview{white-space:pre-wrap;font-family:inherit;line-height:1.7;font-size:14px}
       #mode-report .ai-box{white-space:pre-wrap;line-height:1.7;font-size:14px;min-height:60px}
       #mode-report .status-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+      #mode-report .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+      @media(max-width:680px){#mode-report .kpi-row{grid-template-columns:repeat(2,1fr)}}
+      #mode-report .kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+      #mode-report .kpi .v{font-size:24px;font-weight:800;color:var(--accent-d);line-height:1.1}
+      #mode-report .kpi .k{font-size:12px;color:var(--ink-soft);margin-top:4px}
+      #mode-report .bar{height:14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin-top:6px}
+      #mode-report .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6c7cf0,#4a5cd6);width:0}
+      #mode-report .curve-wrap{margin-top:14px}
+      #mode-report svg.curve{width:100%;height:160px;display:block}
     </style>
 
     <div class="card">
       <h3>📋 ระบบรายงานความก้าวหน้าหน้างาน (Site Progress Report)</h3>
       <div class="note tip">กรอกข้อมูลหน้างานประจำวัน → ระบบจะสร้าง <strong>รายงาน Executive Summary</strong> พร้อมแฮชแท็ก สำหรับส่งผู้ควบคุมงาน/ลงโซเชียลได้ทันที — แนบรูปแล้วให้ <strong>AI ช่วยตรวจงานตามแบบและประเมินแผน</strong> ได้</div>
+    </div>
+
+    <div class="card" id="rpDashboard">
+      <h3>📊 Dashboard ภาพรวมโครงการ</h3>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v" id="kpiPercent">0%</div><div class="k">ความก้าวหน้าล่าสุด</div></div>
+        <div class="kpi"><div class="v" id="kpiReports">0</div><div class="k">รายงานที่บันทึก</div></div>
+        <div class="kpi"><div class="v" id="kpiDays">0</div><div class="k">จำนวนวันที่บันทึก</div></div>
+        <div class="kpi"><div class="v" id="kpiIssues">0</div><div class="k">ปัญหาสะสมที่บันทึก</div></div>
+      </div>
+      <div class="bar" title="ความก้าวหน้าล่าสุด"><i id="kpiBar"></i></div>
+      <div class="curve-wrap">
+        <div class="note tip" style="margin-bottom:6px">📈 เส้นความก้าวหน้า (S-curve) จากรายงานที่บันทึก</div>
+        <svg class="curve" id="rpCurve" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="note tip" id="rpDashNote" style="margin-top:8px">ยังไม่มีข้อมูล — กรอกรายงานแล้วกด “💾 บันทึกรายงาน” เพื่อสะสมข้อมูลภาพรวม</div>
     </div>
 
     <div class="rep-grid">
@@ -831,6 +856,10 @@ textarea.prompt:focus{outline:none}
           <div class="row-2">
             <div class="field"><label>วันที่ (Day)</label><input type="number" id="rpDay" min="1" value="1"></div>
             <div class="field"><label>ทีมงาน / ผู้รับเหมา</label><input type="text" id="rpTeam" placeholder="ทีมงานต่อบัณฑิต"></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>% ความก้าวหน้าโดยรวม</label><input type="number" id="rpPercent" min="0" max="100" step="1" value="0"></div>
+            <div class="field"><label>ช่วงงานปัจจุบัน</label><input type="text" id="rpPhase" placeholder="งานฐานราก / ตอม่อ / คานคอดิน…"></div>
           </div>
         </div>
 
@@ -890,6 +919,7 @@ textarea.prompt:focus{outline:none}
             <button class="btn primary" id="rpGenerate">📝 สร้างรายงาน</button>
             <button class="btn blue" id="rpCopy">📋 คัดลอก</button>
             <button class="btn ghost" id="rpDownload">⬇️ ดาวน์โหลด .txt</button>
+            <button class="btn ghost" id="rpPDF">🖨️ ส่งออก PDF</button>
             <button class="btn ghost" id="rpSave">💾 บันทึกรายงาน</button>
           </div>
           <div class="out" style="margin-top:10px">
@@ -2657,6 +2687,8 @@ document.addEventListener("DOMContentLoaded", function(){
       date: g("rpDate").value.trim(),
       day: g("rpDay").value.trim(),
       team: g("rpTeam").value.trim(),
+      percent: g("rpPercent").value.trim(),
+      phase: g("rpPhase").value.trim(),
       progress: readLines("rpProgressList"),
       issues: readLines("rpIssueList"),
       plan: readLines("rpPlanList"),
@@ -2671,6 +2703,8 @@ document.addEventListener("DOMContentLoaded", function(){
     if(d.location) L.push("พิกัด: " + d.location);
     const dateLine = [d.date ? "วันที่รายงาน: " + d.date : "", d.day ? "(Day " + d.day + ")" : ""].filter(Boolean).join(" ");
     if(dateLine) L.push(dateLine);
+    const pp = [d.phase ? "ช่วงงาน: " + d.phase : "", (d.percent && +d.percent>0) ? "ความก้าวหน้าโดยรวม: " + d.percent + "%" : ""].filter(Boolean).join("  |  ");
+    if(pp) L.push(pp);
     L.push("");
     L.push("ความก้าวหน้าประจำวัน");
     (d.progress.length?d.progress:["—"]).forEach(x => L.push("✅ " + x));
@@ -2756,7 +2790,7 @@ document.addEventListener("DOMContentLoaded", function(){
     const arr = loadStore();
     arr.unshift(d);
     saveStore(arr.slice(0, 100));
-    refreshHistory();
+    refreshHistory(); updateDashboard();
     toast("💾 บันทึกรายงานแล้ว");
   }
   function loadReport(){
@@ -2765,6 +2799,7 @@ document.addEventListener("DOMContentLoaded", function(){
     const d = arr[i];
     g("rpProject").value = d.project||""; g("rpLocation").value = d.location||"";
     g("rpDate").value = d.date||""; g("rpDay").value = d.day||""; g("rpTeam").value = d.team||"";
+    g("rpPercent").value = d.percent||"0"; g("rpPhase").value = d.phase||"";
     g("rpStatus").value = d.status||""; g("rpTags").value = d.tags||"";
     setLines("rpProgressList", d.progress); setLines("rpIssueList", d.issues); setLines("rpPlanList", d.plan);
     state.photos = (d.photos||[]).slice(); renderPhotos();
@@ -2774,8 +2809,85 @@ document.addEventListener("DOMContentLoaded", function(){
   function deleteReport(){
     const arr = loadStore(); const i = parseInt(g("rpHistory").value, 10);
     if(isNaN(i) || !arr[i]){ toast("เลือกรายงานก่อน","error"); return; }
-    arr.splice(i,1); saveStore(arr); refreshHistory();
+    arr.splice(i,1); saveStore(arr); refreshHistory(); updateDashboard();
     toast("🗑️ ลบแล้ว");
+  }
+
+  /* ---------- Dashboard ---------- */
+  function updateDashboard(){
+    const arr = loadStore().slice().sort((a,b)=>(a.savedAt||0)-(b.savedAt||0));
+    const reports = arr.length;
+    const days = new Set(arr.map(r => r.day || r.date).filter(Boolean)).size;
+    const issues = arr.reduce((s,r)=> s + ((r.issues&&r.issues.length)||0), 0);
+    const pts = arr.map(r => Math.max(0, Math.min(100, parseFloat(r.percent)||0)));
+    const latest = pts.length ? pts[pts.length-1] : 0;
+
+    g("kpiPercent").textContent = latest + "%";
+    g("kpiReports").textContent = reports;
+    g("kpiDays").textContent = days;
+    g("kpiIssues").textContent = issues;
+    g("kpiBar").style.width = latest + "%";
+
+    // วาด S-curve
+    const svg = g("rpCurve"); const W=600, H=160, pad=10;
+    if(pts.length < 1){ svg.innerHTML = ""; }
+    else {
+      const n = pts.length;
+      const x = i => n===1 ? W/2 : pad + (W-2*pad) * i/(n-1);
+      const y = v => H-pad - (H-2*pad) * v/100;
+      let d = "";
+      pts.forEach((v,i)=>{ d += (i?" L":"M") + x(i).toFixed(1) + " " + y(v).toFixed(1); });
+      const area = d + " L"+x(n-1).toFixed(1)+" "+(H-pad)+" L"+x(0).toFixed(1)+" "+(H-pad)+" Z";
+      const dots = pts.map((v,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.5" fill="#4a5cd6"/>`).join("");
+      const grid = [0,25,50,75,100].map(v=>`<line x1="${pad}" y1="${y(v)}" x2="${W-pad}" y2="${y(v)}" stroke="#e6e8f5" stroke-width="1"/><text x="2" y="${y(v)+3}" font-size="9" fill="#9aa">${v}</text>`).join("");
+      svg.innerHTML = grid +
+        `<path d="${area}" fill="rgba(108,124,240,.12)" stroke="none"/>` +
+        `<path d="${d}" fill="none" stroke="#4a5cd6" stroke-width="2.5"/>` + dots;
+    }
+    g("rpDashNote").textContent = reports
+      ? ("อัปเดตล่าสุด: ความก้าวหน้า " + latest + "% · บันทึกไว้ " + reports + " รายงาน")
+      : "ยังไม่มีข้อมูล — กรอกรายงานแล้วกด “💾 บันทึกรายงาน” เพื่อสะสมข้อมูลภาพรวม";
+  }
+
+  /* ---------- ส่งออก PDF (ผ่านหน้าต่างพิมพ์ของเบราว์เซอร์) ---------- */
+  function esc(s){ return String(s||"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+  function exportPDF(){
+    const d = collect();
+    if(!state.lastReport) generateReport();
+    const photos = state.photos.map(src => `<img src="${src}">`).join("");
+    const reportHtml = esc(state.lastReport).replace(/\n/g, "<br>");
+    const aiOut = g("rpAIOut");
+    const aiHtml = (aiOut && aiOut.style.display !== "none" && aiOut.textContent.trim())
+      ? `<h2>🤖 ผลวิเคราะห์จาก AI</h2><div class="ai">${esc(aiOut.textContent).replace(/\n/g,"<br>")}</div>` : "";
+    const w = window.open("", "_blank");
+    if(!w){ toast("เบราว์เซอร์บล็อกหน้าต่าง — อนุญาต popup ก่อน","error"); return; }
+    w.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
+      <title>รายงานหน้างาน ${esc(d.date)}</title>
+      <style>
+        *{box-sizing:border-box}
+        body{font-family:'Sarabun','Noto Sans Thai',system-ui,sans-serif;color:#1a1a2e;margin:28px;line-height:1.65}
+        h1{font-size:20px;margin:0 0 2px;color:#2a2f6a}
+        .meta{color:#666;font-size:13px;margin-bottom:14px}
+        .pct{display:inline-block;background:#eef0fb;color:#2a2f6a;font-weight:700;border-radius:8px;padding:4px 12px;margin:6px 0}
+        .report{white-space:normal;font-size:14px;background:#f7f8fd;border:1px solid #e6e8f5;border-radius:10px;padding:14px}
+        h2{font-size:15px;margin:18px 0 6px;color:#2a2f6a}
+        .ai{font-size:13px;background:#fff;border:1px solid #e6e8f5;border-radius:10px;padding:12px}
+        .photos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+        .photos img{width:100%;border-radius:8px;border:1px solid #ddd}
+        footer{margin-top:24px;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:8px}
+        @media print{ body{margin:14mm} .photos{grid-template-columns:repeat(2,1fr)} }
+      </style></head><body>
+      <h1>📋 รายงานความก้าวหน้าหน้างาน</h1>
+      <div class="meta">${esc(d.project||"")} ${d.location?("· "+esc(d.location)):""} ${d.date?("· "+esc(d.date)):""} ${d.day?("· Day "+esc(d.day)):""}</div>
+      ${(d.percent && +d.percent>0) ? `<div class="pct">ความก้าวหน้าโดยรวม ${esc(d.percent)}%${d.phase?(" · "+esc(d.phase)):""}</div>` : ""}
+      <div class="report">${reportHtml}</div>
+      ${photos ? `<h2>📷 รูปภาพหน้างาน</h2><div class="photos">${photos}</div>` : ""}
+      ${aiHtml}
+      <footer>สร้างจากระบบรายงานหน้างาน · ${new Date().toLocaleString("th-TH")}</footer>
+      <script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>
+      </body></html>`);
+    w.document.close();
+    toast("🖨️ เปิดหน้าพิมพ์ — เลือก “บันทึกเป็น PDF”");
   }
 
   let inited = false;
@@ -2800,6 +2912,7 @@ document.addEventListener("DOMContentLoaded", function(){
     g("rpGenerate").addEventListener("click", generateReport);
     g("rpCopy").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } copyToClipboard(state.lastReport); });
     g("rpDownload").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } downloadText("รายงานหน้างาน_" + (g("rpDate").value||"").replace(/\//g,"-") + ".txt", state.lastReport); });
+    g("rpPDF").addEventListener("click", exportPDF);
     g("rpSave").addEventListener("click", saveReport);
 
     g("rpAIDraft").addEventListener("click", e => callAI("draft", e.currentTarget));
@@ -2810,6 +2923,7 @@ document.addEventListener("DOMContentLoaded", function(){
     g("rpDelete").addEventListener("click", deleteReport);
 
     refreshHistory();
+    updateDashboard();
   }
   window.__initReportMode = init;
 })();
