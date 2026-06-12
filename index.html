@@ -6,7 +6,7 @@
 <title>AI Architectural Prompt Generator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#eef1f7; --surface:#ffffff; --surface-2:#f7f9fc; --ink:#1e2733; --ink-soft:#5b6675;
@@ -170,6 +170,188 @@ textarea.prompt:focus{outline:none}
   .mode-btn{min-width:0;flex:1 1 45%}
 }
 </style>
+
+<!-- ===== 2026 UI THEME (override) — no-flash init ===== -->
+<script>(function(){try{var t=localStorage.getItem("ui-theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<style>
+/* ============================================================
+   2026 UX/UI THEME — glassmorphism + mesh + dark mode
+   ยกระดับหน้าตาโดยไม่แตะมาร์กอัป/คลาสเดิม (override ด้วยลำดับ source)
+   ============================================================ */
+:root{
+  color-scheme: light;
+  /* base */
+  --bg:#e8ecf7; --paper:var(--surface-strong);
+  --surface-strong:#ffffff;
+  --surface:rgba(255,255,255,.72);
+  --surface-2:rgba(255,255,255,.5);
+  --input-bg:rgba(255,255,255,.66);
+  --ink:#16203a; --ink-soft:#5a657d;
+  --line:rgba(22,32,58,.10); --line-2:rgba(22,32,58,.06);
+  /* accents */
+  --accent:#6366f1; --accent-2:#8b5cf6; --accent-3:#14b8a6;
+  --accent-d:#4338ca; --accent-soft:rgba(99,102,241,.13);
+  --grad:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#14b8a6 100%);
+  --grad-2:linear-gradient(135deg,#6366f1,#8b5cf6);
+  /* semantic (translucent → ใช้ได้ทั้ง light/dark) */
+  --teal:#14b8a6; --teal-soft:rgba(20,184,166,.14);
+  --amber:#f59e0b; --amber-soft:rgba(245,158,11,.15);
+  --gold:#caa029; --gold-soft:rgba(202,160,41,.16);
+  --red:#ef4444; --red-soft:rgba(239,68,68,.14);
+  --blue:#3b82f6; --blue-soft:rgba(59,130,246,.14);
+  --green:#10b981; --green-soft:rgba(16,185,129,.14);
+  --purple:#8b5cf6; --purple-soft:rgba(139,92,246,.14);
+  --cyan:#06b6d4; --cyan-soft:rgba(6,182,212,.14);
+  /* shape & depth */
+  --radius:22px; --radius-sm:14px;
+  --blur:saturate(180%) blur(18px);
+  --shadow-sm:0 1px 2px rgba(20,28,58,.05),0 10px 24px -18px rgba(31,38,90,.45);
+  --shadow:0 2px 8px rgba(20,28,58,.06),0 28px 56px -28px rgba(31,38,90,.5);
+  --ring:0 0 0 4px rgba(99,102,241,.22);
+}
+html[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#080b16; --surface-strong:#141a2b;
+  --surface:rgba(24,30,48,.62); --surface-2:rgba(34,42,64,.5);
+  --input-bg:rgba(255,255,255,.05);
+  --ink:#e9edf7; --ink-soft:#9aa6c0;
+  --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.055);
+  --accent:#818cf8; --accent-2:#a78bfa; --accent-3:#2dd4bf;
+  --accent-d:#c7d2fe; --accent-soft:rgba(129,140,248,.18);
+  --grad:linear-gradient(135deg,#818cf8 0%,#a78bfa 50%,#2dd4bf 100%);
+  --grad-2:linear-gradient(135deg,#818cf8,#a78bfa);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4),0 12px 28px -20px rgba(0,0,0,.8);
+  --shadow:0 2px 10px rgba(0,0,0,.45),0 32px 64px -28px rgba(0,0,0,.85);
+  --ring:0 0 0 4px rgba(129,140,248,.28);
+}
+
+/* ---- background mesh (2026) ---- */
+body{
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(99,102,241,.22), transparent 60%),
+    radial-gradient(55% 45% at 92% 12%, rgba(20,184,166,.20), transparent 60%),
+    radial-gradient(50% 50% at 75% 90%, rgba(139,92,246,.18), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(99,102,241,.20), transparent 60%),
+    radial-gradient(55% 45% at 92% 12%, rgba(20,184,166,.16), transparent 60%),
+    radial-gradient(50% 50% at 75% 90%, rgba(139,92,246,.18), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+.app{max-width:1200px;padding:26px 20px 80px}
+::selection{background:rgba(99,102,241,.28)}
+*{scrollbar-width:thin;scrollbar-color:var(--accent) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:var(--accent-soft);border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ---- typography ---- */
+h1,.topbar h1,.card h3{font-family:'Outfit','Space Grotesk','Sarabun',system-ui,sans-serif;letter-spacing:-.02em}
+.topbar h1{font-size:21px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---- glass primitives ---- */
+.topbar,.card,.subtabs,.out,.selector,.radio-bar,.disp-card{
+  background:var(--surface);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);
+}
+.topbar{border-radius:var(--radius);padding:18px 22px;position:relative;overflow:hidden}
+.topbar::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(120deg,rgba(255,255,255,.7),rgba(255,255,255,0) 40%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.6}
+.card{border-radius:var(--radius);padding:22px;transition:box-shadow .25s,transform .25s,border-color .25s}
+.card:hover{box-shadow:var(--shadow);border-color:var(--accent-soft)}
+.card h3{border-bottom:1px solid var(--line-2);font-weight:700}
+.card h4{color:var(--accent-d)}
+
+/* ---- primary nav (pill + gradient glow) ---- */
+.modebar{gap:10px;margin-top:20px}
+.mode-btn{
+  background:var(--surface);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);color:var(--ink-soft);border-radius:16px;padding:14px 16px;
+  font-weight:700;box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .25s,color .2s,border-color .2s}
+.mode-btn:hover{transform:translateY(-2px);color:var(--ink);border-color:var(--accent-soft);box-shadow:var(--shadow)}
+.mode-btn.active{background:var(--grad-2);border-color:transparent;color:#fff;
+  box-shadow:0 12px 28px -10px var(--accent),0 0 0 1px rgba(255,255,255,.12) inset}
+
+/* ---- sub tabs ---- */
+.subtabs{border-radius:18px;padding:9px;gap:8px}
+.tab-btn{border-radius:12px;font-weight:600;transition:.2s}
+.tab-btn:hover{background:var(--surface-2);color:var(--ink)}
+.tab-btn.active{background:var(--accent-soft);color:var(--accent-d);border-color:transparent;
+  box-shadow:0 2px 8px -2px var(--accent-soft)}
+
+/* ---- fields ---- */
+.field label{font-weight:600;letter-spacing:.01em}
+.field input,.field select,.field textarea{
+  background:var(--input-bg);border:1px solid var(--line);border-radius:12px;padding:11px 13px;
+  color:var(--ink);transition:border-color .2s,box-shadow .2s,background .2s}
+.field input::placeholder,.field textarea::placeholder{color:var(--ink-soft);opacity:.7}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--accent);box-shadow:var(--ring);background:var(--surface-strong)}
+html[data-theme="dark"] .field select option{background:var(--surface-strong);color:var(--ink)}
+
+/* ---- notes ---- */
+.note{border-radius:14px;font-weight:600;border:1px solid var(--line)}
+.note.tip{background:var(--accent-soft);color:var(--accent-d);border-color:transparent}
+.note.ok{background:var(--green-soft);color:var(--green);border-color:transparent}
+.note.warn{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.note code{background:var(--surface-2);color:var(--ink)}
+
+/* ---- badges / pills ---- */
+.pill{background:var(--accent-soft);color:var(--accent-d);border-color:transparent;font-weight:700;
+  padding:6px 13px}
+.badge{border-radius:999px;font-weight:700;background:var(--surface-2);border-color:var(--line)}
+
+/* ---- buttons (gradient + lift) ---- */
+.btn{border-radius:13px;font-weight:700;padding:11px 18px;border:1px solid var(--line);
+  background:var(--surface-strong);color:var(--ink);box-shadow:var(--shadow-sm);
+  transition:transform .18s,box-shadow .25s,filter .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow);filter:brightness(1.02)}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn.primary{background:var(--grad-2);border-color:transparent;color:#fff;
+  box-shadow:0 12px 26px -12px var(--accent)}
+.btn.blue{background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:transparent;color:#fff}
+.btn.green{background:linear-gradient(135deg,#10b981,#059669);border-color:transparent;color:#fff}
+.btn.warn{background:linear-gradient(135deg,#f59e0b,#d97706);border-color:transparent;color:#fff}
+.btn.gold{background:linear-gradient(135deg,#d4af37,#b8860b);border-color:transparent;color:#fff}
+.btn.danger{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:transparent;color:#fff}
+.btn.ghost{background:var(--surface);color:var(--ink-soft);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+.btn.ghost:hover{color:var(--ink)}
+
+/* ---- output / selector ---- */
+.out{border-radius:var(--radius)}
+.out-head{background:var(--surface-2);border-bottom:1px solid var(--line);color:var(--ink)}
+.selector,.radio-bar{border-radius:16px}
+.flow .step,.disp-card,.ro{border-radius:14px}
+.flow .step{background:var(--surface-2);border-color:var(--line)}
+
+/* ---- theme toggle ---- */
+.theme-toggle{flex:none;width:42px;height:42px;border-radius:13px;cursor:pointer;font-size:18px;
+  display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  transition:transform .2s,box-shadow .25s,border-color .2s;box-shadow:var(--shadow-sm);margin-left:10px}
+.theme-toggle:hover{transform:translateY(-2px) rotate(-8deg);border-color:var(--accent-soft);box-shadow:var(--shadow)}
+
+/* ---- toast ---- */
+.toast{border-radius:14px;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  background:rgba(17,24,39,.92)}
+.toast.info{background:var(--grad-2)}
+
+/* ---- price table sticky head ---- */
+#priceTable thead tr{background:var(--surface-strong)!important}
+
+/* ---- motion preferences ---- */
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+@media(max-width:560px){.app{padding:16px 13px 60px}.theme-toggle{width:38px;height:38px}}
+</style>
 <body>
 <div class="app">
   <header class="topbar">
@@ -187,6 +369,7 @@ textarea.prompt:focus{outline:none}
     </div>
     <div class="spacer"></div>
     <span class="pill">เวอร์ชันใหม่</span>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด">🌙</button>
   </header>
 
   <nav class="modebar">
@@ -3086,6 +3269,23 @@ document.addEventListener("DOMContentLoaded", function(){
   window.__initReportMode = init;
 })();
 
+</script>
+
+<!-- ===== Theme toggle (2026) ===== -->
+<script>
+(function(){
+  var root = document.documentElement, btn = document.getElementById("themeToggle");
+  function current(){ return root.getAttribute("data-theme") === "dark" ? "dark" : "light"; }
+  function apply(t){
+    root.setAttribute("data-theme", t);
+    try{ localStorage.setItem("ui-theme", t); }catch(e){}
+    if(btn) btn.textContent = t === "dark" ? "☀️" : "🌙";
+  }
+  if(btn){
+    btn.textContent = current() === "dark" ? "☀️" : "🌙";
+    btn.addEventListener("click", function(){ apply(current() === "dark" ? "light" : "dark"); });
+  }
+})();
 </script>
 </body>
 </html>
