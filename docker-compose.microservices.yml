@@ -1,0 +1,63 @@
+# Microservices stack — gateway + auth + reports + ai
+# ใช้:  docker compose -f docker-compose.microservices.yml up -d --build
+# (กรอก JWT_SECRET และ OPENAI_API_KEY ใน .env ก่อน — ดู .env.example)
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    container_name: sr-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - AUTH_URL=http://auth:8081
+      - REPORTS_URL=http://reports:8082
+      - AI_URL=http://ai:8083
+      - RATE_MAX=120
+    depends_on:
+      - auth
+      - reports
+      - ai
+
+  auth:
+    build:
+      context: ./services
+      dockerfile: auth/Dockerfile
+    container_name: sr-auth
+    restart: unless-stopped
+    environment:
+      - PORT=8081
+      - DATA_DIR=/data
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - auth-data:/data
+
+  reports:
+    build:
+      context: ./services
+      dockerfile: reports/Dockerfile
+    container_name: sr-reports
+    restart: unless-stopped
+    environment:
+      - PORT=8082
+      - DATA_DIR=/data
+      - JWT_SECRET=${JWT_SECRET}   # ตรวจ token ด้วย secret เดียวกัน (HS256)
+    volumes:
+      - reports-data:/data
+
+  ai:
+    build:
+      context: ./services
+      dockerfile: ai/Dockerfile
+    container_name: sr-ai
+    restart: unless-stopped
+    environment:
+      - PORT=8083
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    # สเกล AI แยกตามโหลด:  docker compose ... up -d --scale ai=2
+
+volumes:
+  auth-data:
+  reports-data:

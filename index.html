@@ -6,7 +6,7 @@
 <title>AI Architectural Prompt Generator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#eef1f7; --surface:#ffffff; --surface-2:#f7f9fc; --ink:#1e2733; --ink-soft:#5b6675;
@@ -170,6 +170,190 @@ textarea.prompt:focus{outline:none}
   .mode-btn{min-width:0;flex:1 1 45%}
 }
 </style>
+
+<!-- ===== 2026 UI THEME (override) — no-flash init ===== -->
+<script>(function(){try{var t=localStorage.getItem("ui-theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<style>
+/* ============================================================
+   2026 UX/UI THEME — glassmorphism + mesh + dark mode
+   ยกระดับหน้าตาโดยไม่แตะมาร์กอัป/คลาสเดิม (override ด้วยลำดับ source)
+   ============================================================ */
+:root{
+  color-scheme: light;
+  /* base */
+  --bg:#eaf3fc; --paper:var(--surface-strong);
+  --surface-strong:#ffffff;
+  --surface:rgba(255,255,255,.78);
+  --surface-2:rgba(255,255,255,.56);
+  --input-bg:rgba(255,255,255,.72);
+  --ink:#1c2c40; --ink-soft:#5b6a7e;
+  --line:rgba(28,44,64,.10); --line-2:rgba(28,44,64,.055);
+  /* accents: น้ำเงินอ่อน + เหลือง */
+  --accent:#3b9fe3; --accent-2:#f6c945; --accent-3:#7cc6f2;
+  --accent-d:#1f6fb0; --accent-soft:rgba(59,159,227,.14);
+  --yellow:#f6c945; --yellow-soft:rgba(246,201,69,.20); --pill-ink:#8a6608;
+  --grad:linear-gradient(135deg,#3b9fe3 0%,#7cc6f2 46%,#f6c945 100%);
+  --grad-2:linear-gradient(135deg,#48a7e7,#7cc6f2);
+  /* semantic (translucent → ใช้ได้ทั้ง light/dark) */
+  --teal:#14b8a6; --teal-soft:rgba(20,184,166,.14);
+  --amber:#f59e0b; --amber-soft:rgba(245,158,11,.15);
+  --gold:#caa029; --gold-soft:rgba(202,160,41,.16);
+  --red:#ef4444; --red-soft:rgba(239,68,68,.14);
+  --blue:#3b82f6; --blue-soft:rgba(59,130,246,.14);
+  --green:#10b981; --green-soft:rgba(16,185,129,.14);
+  --purple:#8b5cf6; --purple-soft:rgba(139,92,246,.14);
+  --cyan:#06b6d4; --cyan-soft:rgba(6,182,212,.14);
+  /* shape & depth */
+  --radius:22px; --radius-sm:14px;
+  --blur:saturate(180%) blur(18px);
+  --shadow-sm:0 1px 2px rgba(20,28,58,.05),0 10px 24px -18px rgba(31,38,90,.45);
+  --shadow:0 2px 8px rgba(20,28,58,.06),0 28px 56px -28px rgba(31,38,90,.5);
+  --ring:0 0 0 4px rgba(59,159,227,.26);
+}
+html[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0a121d; --surface-strong:#121b29;
+  --surface:rgba(20,30,46,.62); --surface-2:rgba(28,42,60,.5);
+  --input-bg:rgba(255,255,255,.05);
+  --ink:#e9f1fa; --ink-soft:#9bb0c6;
+  --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.055);
+  --accent:#5cb4ee; --accent-2:#f6cf5a; --accent-3:#8fd0f5;
+  --accent-d:#bfe2fb; --accent-soft:rgba(92,180,238,.20);
+  --yellow:#f6cf5a; --yellow-soft:rgba(246,207,90,.16); --pill-ink:#f6cf5a;
+  --grad:linear-gradient(135deg,#5cb4ee 0%,#8fd0f5 46%,#f6cf5a 100%);
+  --grad-2:linear-gradient(135deg,#5cb4ee,#8fd0f5);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4),0 12px 28px -20px rgba(0,0,0,.8);
+  --shadow:0 2px 10px rgba(0,0,0,.45),0 32px 64px -28px rgba(0,0,0,.85);
+  --ring:0 0 0 4px rgba(92,180,238,.30);
+}
+
+/* ---- background mesh (2026) ---- */
+body{
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(59,159,227,.24), transparent 60%),
+    radial-gradient(55% 45% at 92% 12%, rgba(246,201,69,.24), transparent 60%),
+    radial-gradient(50% 50% at 75% 90%, rgba(124,198,242,.22), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(92,180,238,.20), transparent 60%),
+    radial-gradient(55% 45% at 92% 12%, rgba(246,207,90,.16), transparent 60%),
+    radial-gradient(50% 50% at 75% 90%, rgba(143,208,245,.18), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+}
+.app{max-width:1200px;padding:26px 20px 80px}
+::selection{background:rgba(59,159,227,.30)}
+*{scrollbar-width:thin;scrollbar-color:var(--accent) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:var(--accent-soft);border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ---- typography ---- */
+h1,.topbar h1,.card h3{font-family:'Outfit','Space Grotesk','Sarabun',system-ui,sans-serif;letter-spacing:-.02em}
+.topbar h1{font-size:21px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---- glass primitives ---- */
+.topbar,.card,.subtabs,.out,.selector,.radio-bar,.disp-card{
+  background:var(--surface);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);
+}
+.topbar{border-radius:var(--radius);padding:18px 22px;position:relative;overflow:hidden}
+.topbar::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(120deg,rgba(255,255,255,.7),rgba(255,255,255,0) 40%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.6}
+.card{border-radius:var(--radius);padding:22px;transition:box-shadow .25s,transform .25s,border-color .25s}
+.card:hover{box-shadow:var(--shadow);border-color:var(--accent-soft)}
+.card h3{border-bottom:1px solid var(--line-2);font-weight:700}
+.card h4{color:var(--accent-d)}
+
+/* ---- primary nav (pill + gradient glow) ---- */
+.modebar{gap:10px;margin-top:20px}
+.mode-btn{
+  background:var(--surface);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);color:var(--ink-soft);border-radius:16px;padding:14px 16px;
+  font-weight:700;box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .25s,color .2s,border-color .2s}
+.mode-btn:hover{transform:translateY(-2px);color:var(--ink);border-color:var(--accent-soft);box-shadow:var(--shadow)}
+.mode-btn.active{background:var(--grad-2);border-color:transparent;color:#fff;
+  box-shadow:0 12px 28px -10px var(--accent),0 0 0 1px rgba(255,255,255,.12) inset}
+
+/* ---- sub tabs ---- */
+.subtabs{border-radius:18px;padding:9px;gap:8px}
+.tab-btn{border-radius:12px;font-weight:600;transition:.2s}
+.tab-btn:hover{background:var(--surface-2);color:var(--ink)}
+.tab-btn.active{background:var(--accent-soft);color:var(--accent-d);border-color:transparent;
+  box-shadow:0 2px 8px -2px var(--accent-soft)}
+
+/* ---- fields ---- */
+.field label{font-weight:600;letter-spacing:.01em}
+.field input,.field select,.field textarea{
+  background:var(--input-bg);border:1px solid var(--line);border-radius:12px;padding:11px 13px;
+  color:var(--ink);transition:border-color .2s,box-shadow .2s,background .2s}
+.field input::placeholder,.field textarea::placeholder{color:var(--ink-soft);opacity:.7}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--accent);box-shadow:var(--ring);background:var(--surface-strong)}
+html[data-theme="dark"] .field select option{background:var(--surface-strong);color:var(--ink)}
+
+/* ---- notes ---- */
+.note{border-radius:14px;font-weight:600;border:1px solid var(--line)}
+.note.tip{background:var(--accent-soft);color:var(--accent-d);border-color:transparent}
+.note.ok{background:var(--green-soft);color:var(--green);border-color:transparent}
+.note.warn{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.note code{background:var(--surface-2);color:var(--ink)}
+
+/* ---- badges / pills ---- */
+.pill{background:var(--yellow-soft);color:var(--pill-ink);border-color:transparent;font-weight:700;
+  padding:6px 13px}
+.badge{border-radius:999px;font-weight:700;background:var(--surface-2);border-color:var(--line)}
+
+/* ---- buttons (gradient + lift) ---- */
+.btn{border-radius:13px;font-weight:700;padding:11px 18px;border:1px solid var(--line);
+  background:var(--surface-strong);color:var(--ink);box-shadow:var(--shadow-sm);
+  transition:transform .18s,box-shadow .25s,filter .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow);filter:brightness(1.02)}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn.primary{background:var(--grad-2);border-color:transparent;color:#fff;
+  box-shadow:0 12px 26px -12px var(--accent)}
+.btn.blue{background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:transparent;color:#fff}
+.btn.green{background:linear-gradient(135deg,#10b981,#059669);border-color:transparent;color:#fff}
+.btn.warn{background:linear-gradient(135deg,#f59e0b,#d97706);border-color:transparent;color:#fff}
+.btn.gold{background:linear-gradient(135deg,#d4af37,#b8860b);border-color:transparent;color:#fff}
+.btn.danger{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:transparent;color:#fff}
+.btn.ghost{background:var(--surface);color:var(--ink-soft);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+.btn.ghost:hover{color:var(--ink)}
+
+/* ---- output / selector ---- */
+.out{border-radius:var(--radius)}
+.out-head{background:var(--surface-2);border-bottom:1px solid var(--line);color:var(--ink)}
+.selector,.radio-bar{border-radius:16px}
+.flow .step,.disp-card,.ro{border-radius:14px}
+.flow .step{background:var(--surface-2);border-color:var(--line)}
+
+/* ---- theme toggle ---- */
+.theme-toggle{flex:none;width:42px;height:42px;border-radius:13px;cursor:pointer;font-size:18px;
+  display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  transition:transform .2s,box-shadow .25s,border-color .2s;box-shadow:var(--shadow-sm);margin-left:10px}
+.theme-toggle:hover{transform:translateY(-2px) rotate(-8deg);border-color:var(--accent-soft);box-shadow:var(--shadow)}
+
+/* ---- toast ---- */
+.toast{border-radius:14px;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  background:rgba(17,24,39,.92)}
+.toast.info{background:var(--grad-2)}
+
+/* ---- price table sticky head ---- */
+#priceTable thead tr{background:var(--surface-strong)!important}
+
+/* ---- motion preferences ---- */
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+@media(max-width:560px){.app{padding:16px 13px 60px}.theme-toggle{width:38px;height:38px}}
+</style>
 <body>
 <div class="app">
   <header class="topbar">
@@ -187,11 +371,13 @@ textarea.prompt:focus{outline:none}
     </div>
     <div class="spacer"></div>
     <span class="pill">เวอร์ชันใหม่</span>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="สลับโหมดสว่าง/มืด" title="สลับโหมดสว่าง/มืด">🌙</button>
   </header>
 
   <nav class="modebar">
     <button class="mode-btn active" data-mode="design">🎨 ออกแบบ / สร้างภาพ</button>
     <button class="mode-btn" data-mode="boq">📊 ประมาณราคา BOQ</button>
+    <button class="mode-btn" data-mode="report">📋 รายงานหน้างาน</button>
     <button class="mode-btn" data-mode="save">💾 บันทึกงาน</button>
     <button class="mode-btn" data-mode="help">📖 วิธีใช้</button>
   </nav>
@@ -790,6 +976,186 @@ textarea.prompt:focus{outline:none}
         <div class="badges"><span class="badge gold">📄 ตารางเท่านั้น</span><span class="badge red">🇬🇧 English</span></div>
       </div>
       <textarea id="txtPromptBOQ" class="prompt" readonly placeholder="กดปุ่ม 'สร้างคำสั่ง BOQ' เพื่อสร้างคำสั่ง..."></textarea>
+    </div>
+  </section>
+
+  <!-- ===== MODE: REPORT (รายงานหน้างาน) ===== -->
+  <section id="mode-report" class="mode">
+    <style>
+      #mode-report .rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      @media(max-width:820px){#mode-report .rep-grid{grid-template-columns:1fr}}
+      #mode-report .line-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+      #mode-report .line-row{display:flex;gap:8px;align-items:center}
+      #mode-report .line-row input{flex:1}
+      #mode-report .line-row .del{flex:0 0 auto;width:38px;padding:8px 0;text-align:center}
+      #mode-report .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:10px}
+      #mode-report .photo-cell{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;aspect-ratio:4/3;background:var(--surface-2)}
+      #mode-report .photo-cell img{width:100%;height:100%;object-fit:cover;display:block}
+      #mode-report .photo-cell .rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;
+        border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1}
+      #mode-report .report-preview{white-space:pre-wrap;font-family:inherit;line-height:1.7;font-size:14px}
+      #mode-report .ai-box{white-space:pre-wrap;line-height:1.7;font-size:14px;min-height:60px}
+      #mode-report .status-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+      #mode-report .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+      @media(max-width:680px){#mode-report .kpi-row{grid-template-columns:repeat(2,1fr)}}
+      #mode-report .kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+      #mode-report .kpi .v{font-size:24px;font-weight:800;color:var(--accent-d);line-height:1.1}
+      #mode-report .kpi .k{font-size:12px;color:var(--ink-soft);margin-top:4px}
+      #mode-report .bar{height:14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin-top:6px}
+      #mode-report .bar > i{display:block;height:100%;background:linear-gradient(90deg,#6c7cf0,#4a5cd6);width:0}
+      #mode-report .curve-wrap{margin-top:14px}
+      #mode-report svg.curve{width:100%;height:160px;display:block}
+    </style>
+
+    <div class="card">
+      <h3>📋 ระบบรายงานความก้าวหน้าหน้างาน (Site Progress Report)</h3>
+      <div class="note tip">กรอกข้อมูลหน้างานประจำวัน → ระบบจะสร้าง <strong>รายงาน Executive Summary</strong> พร้อมแฮชแท็ก สำหรับส่งผู้ควบคุมงาน/ลงโซเชียลได้ทันที — แนบรูปแล้วให้ <strong>AI ช่วยตรวจงานตามแบบและประเมินแผน</strong> ได้</div>
+    </div>
+
+    <div class="card" id="rpDashboard">
+      <h3>📊 Dashboard ภาพรวมโครงการ</h3>
+      <div class="kpi-row">
+        <div class="kpi"><div class="v" id="kpiPercent">0%</div><div class="k">ความก้าวหน้าล่าสุด</div></div>
+        <div class="kpi"><div class="v" id="kpiReports">0</div><div class="k">รายงานที่บันทึก</div></div>
+        <div class="kpi"><div class="v" id="kpiDays">0</div><div class="k">จำนวนวันที่บันทึก</div></div>
+        <div class="kpi"><div class="v" id="kpiIssues">0</div><div class="k">ปัญหาสะสมที่บันทึก</div></div>
+      </div>
+      <div class="bar" title="ความก้าวหน้าล่าสุด"><i id="kpiBar"></i></div>
+      <div class="curve-wrap">
+        <div class="note tip" style="margin-bottom:6px">📈 เส้นความก้าวหน้า (S-curve) จากรายงานที่บันทึก</div>
+        <svg class="curve" id="rpCurve" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="note tip" id="rpDashNote" style="margin-top:8px">ยังไม่มีข้อมูล — กรอกรายงานแล้วกด “💾 บันทึกรายงาน” เพื่อสะสมข้อมูลภาพรวม</div>
+    </div>
+
+    <div class="card" id="rpAccount">
+      <h3>☁️ บัญชี & ซิงค์คลาวด์</h3>
+      <div class="note tip">เข้าสู่ระบบเพื่อเก็บรายงานบนเซิร์ฟเวอร์ของคุณ (ใช้งานเมื่อเปิดผ่าน backend ที่ติดตั้งเอง) — เปิดผ่านไฟล์ตรงๆ จะใช้แค่บันทึกในเครื่อง</div>
+      <div id="rpLoggedOut">
+        <div class="row-2">
+          <div class="field"><label>อีเมล</label><input type="email" id="rpEmail" placeholder="you@example.com"></div>
+          <div class="field"><label>รหัสผ่าน</label><input type="password" id="rpPass" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
+        </div>
+        <div class="btn-group" style="border-top:none;padding-top:0">
+          <button class="btn primary" id="rpLogin">🔑 เข้าสู่ระบบ</button>
+          <button class="btn ghost" id="rpRegister">📝 สมัครสมาชิก</button>
+        </div>
+      </div>
+      <div id="rpLoggedIn" style="display:none">
+        <div class="note ok" id="rpAccountStat">เข้าสู่ระบบแล้ว</div>
+        <div class="btn-group" style="border-top:none;padding-top:0">
+          <button class="btn primary" id="rpSyncUp">⬆️ อัปรายงานขึ้นคลาวด์</button>
+          <button class="btn blue" id="rpSyncDown">⬇️ ดึงจากคลาวด์</button>
+          <button class="btn ghost" id="rpLogout">🚪 ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rep-grid">
+      <!-- ซ้าย: ฟอร์มกรอกข้อมูล -->
+      <div>
+        <div class="card">
+          <h3>🏗️ ข้อมูลโครงการ</h3>
+          <div class="field"><label>ชื่อโครงการ</label><input type="text" id="rpProject" placeholder="ก่อสร้างบ้านพักอาศัยชั้นเดียว 4 หลัง"></div>
+          <div class="row-2">
+            <div class="field"><label>พิกัด / สถานที่</label><input type="text" id="rpLocation" placeholder="อ.บางเลน จ.นครปฐม"></div>
+            <div class="field"><label>วันที่รายงาน</label><input type="text" id="rpDate" placeholder="12/06/2569"></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>วันที่ (Day)</label><input type="number" id="rpDay" min="1" value="1"></div>
+            <div class="field"><label>ทีมงาน / ผู้รับเหมา</label><input type="text" id="rpTeam" placeholder="ทีมงานต่อบัณฑิต"></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>% ความก้าวหน้าโดยรวม</label><input type="number" id="rpPercent" min="0" max="100" step="1" value="0"></div>
+            <div class="field"><label>ช่วงงานปัจจุบัน</label><input type="text" id="rpPhase" placeholder="งานฐานราก / ตอม่อ / คานคอดิน…"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>✅ ความก้าวหน้าประจำวัน</h3>
+          <div class="line-list" id="rpProgressList"></div>
+          <button class="btn ghost" id="rpAddProgress" style="margin-top:8px">➕ เพิ่มรายการ</button>
+        </div>
+
+        <div class="card">
+          <h3>⚠️ ปัญหา / อุปสรรค</h3>
+          <div class="line-list" id="rpIssueList"></div>
+          <button class="btn ghost" id="rpAddIssue" style="margin-top:8px">➕ เพิ่มรายการ</button>
+        </div>
+
+        <div class="card">
+          <h3>🔹 แผนงานวันถัดไป</h3>
+          <div class="line-list" id="rpPlanList"></div>
+          <button class="btn ghost" id="rpAddPlan" style="margin-top:8px">➕ เพิ่มรายการ</button>
+        </div>
+
+        <div class="card">
+          <h3>📈 สถานะโครงการ (สรุป)</h3>
+          <div class="field"><textarea id="rpStatus" rows="4" placeholder="สรุปภาพรวมสถานะโครงการ... (เว้นว่างไว้แล้วกดปุ่ม AI ช่วยร่างได้)"></textarea></div>
+          <div class="field"><label>แฮชแท็ก (คั่นด้วยช่องว่าง)</label><input type="text" id="rpTags" placeholder="#โครงการบ้าน4หลัง #บางเลน #รายงานหน้างาน"></div>
+        </div>
+      </div>
+
+      <!-- ขวา: รูป + AI + ผลลัพธ์ -->
+      <div>
+        <div class="card">
+          <h3>📷 รูปภาพหน้างาน</h3>
+          <div class="note tip">แนบรูปได้หลายรูป (ใช้ประกอบรายงาน และให้ AI ตรวจงานตามแบบ)</div>
+          <input type="file" id="rpPhotos" accept="image/*" multiple style="display:none">
+          <button class="btn blue" id="rpAddPhoto" style="margin-top:8px">📷 เพิ่มรูป</button>
+          <div class="photo-grid" id="rpPhotoGrid"></div>
+        </div>
+
+        <div class="card">
+          <h3>🤖 AI ช่วยงาน</h3>
+          <div class="note tip">ใช้ AI (วิเคราะห์ภาพ) ช่วย: ① ร่างสรุปสถานะ ② ตรวจงานตามหลักการก่อสร้าง ③ ประเมิน/เตือนความเสี่ยงของแผน</div>
+          <div class="btn-group" style="border-top:none;padding-top:0">
+            <button class="btn primary" id="rpAIDraft">✍️ AI ร่างสรุปสถานะ</button>
+            <button class="btn primary" id="rpAIInspect">🔍 AI ตรวจงานตามแบบ</button>
+            <button class="btn primary" id="rpAIPlan">📐 AI ประเมินแผนงาน</button>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>แบบก่อสร้าง / สเปคอ้างอิง (ใส่ข้อความ เพื่อให้ AI ตรวจเทียบ — ไม่ใส่ก็ได้)</label>
+            <textarea id="rpSpec" rows="3" placeholder="เช่น ฐานราก F1 ขนาด 1.50×1.50 ม. เหล็กเสริม DB16@15ซม., ตอม่อ 0.20×0.20 ม. เหล็กยืน 4-DB16..."></textarea>
+          </div>
+          <div class="field">
+            <label>📐 อัปโหลดแบบก่อสร้าง (PDF/รูป) — ให้ AI เทียบรูปหน้างานกับแบบ</label>
+            <input type="file" id="rpPlanFile" accept="image/*,application/pdf" multiple style="display:none">
+            <button class="btn ghost" id="rpAddPlan2" style="margin-top:4px">📎 เลือกไฟล์แบบ</button>
+            <span id="rpPlanStat" class="note tip" style="display:inline-block;margin-left:8px"></span>
+            <div class="photo-grid" id="rpPlanGrid"></div>
+          </div>
+          <div id="rpAIOut" class="note ai-box" style="margin-top:10px;display:none"></div>
+        </div>
+
+        <div class="card">
+          <h3>📄 รายงานที่สร้าง</h3>
+          <div class="btn-group" style="border-top:none;padding-top:0">
+            <button class="btn primary" id="rpGenerate">📝 สร้างรายงาน</button>
+            <button class="btn blue" id="rpCopy">📋 คัดลอก</button>
+            <button class="btn ghost" id="rpDownload">⬇️ ดาวน์โหลด .txt</button>
+            <button class="btn ghost" id="rpPDF">🖨️ ส่งออก PDF</button>
+            <button class="btn ghost" id="rpSave">💾 บันทึกรายงาน</button>
+          </div>
+          <div class="out" style="margin-top:10px">
+            <div class="out-head">
+              <span>📋 Executive Summary</span>
+              <div class="status-badges"><span class="badge gold">พร้อมส่ง</span></div>
+            </div>
+            <div id="rpPreview" class="report-preview" style="min-height:120px;padding:6px 2px">กดปุ่ม “📝 สร้างรายงาน” เพื่อสร้างรายงาน…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🗂️ รายงานที่บันทึกไว้</h3>
+          <div class="field"><select id="rpHistory"></select></div>
+          <div class="btn-group" style="border-top:none;padding-top:0">
+            <button class="btn blue" id="rpLoad">📥 เรียกคืน</button>
+            <button class="btn danger" id="rpDelete">🗑️ ลบ</button>
+          </div>
+          <div class="note tip" id="rpHistStat" style="margin-top:8px">ยังไม่มีรายงานบันทึกไว้</div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -2440,6 +2806,7 @@ function setMode(mode){
   document.querySelectorAll(".mode").forEach(s=>s.classList.toggle("active", s.id==="mode-"+mode));
   if(mode==="boq"){ try{ renderPriceTable(document.getElementById("priceSearch")?document.getElementById("priceSearch").value:""); }catch(e){} }
   if(mode==="save"){ try{ refreshDBUI(); }catch(e){} }
+  if(mode==="report"){ try{ window.__initReportMode && window.__initReportMode(); }catch(e){} }
   window.scrollTo({top:0,behavior:"smooth"});
 }
 document.addEventListener("DOMContentLoaded", function(){
@@ -2450,6 +2817,477 @@ document.addEventListener("DOMContentLoaded", function(){
   if(dl) dl.addEventListener("click",()=>{ const t=document.getElementById("txtPromptBOQ").value; if(!t){toast("ยังไม่มีคำสั่ง BOQ","error");return;} downloadText("BOQ_prompt.txt", t); });
 });
 
+/* =================== MODE: รายงานหน้างาน (Site Progress Report) =================== */
+(function(){
+  const g = id => document.getElementById(id);
+  const REPORT_KEY = "siteReports_v1";
+  const state = { photos: [], planImages: [], lastReport: "" };
+
+  const DEFAULT_PROGRESS = ["วัสดุเหล็กและอุปกรณ์หลักเข้าหน้างานเรียบร้อย"];
+  const DEFAULT_ISSUE = ["มีฝนตกหนักในช่วงเช้า ส่งผลให้การทำงานภาคสนามล่าช้า"];
+  const DEFAULT_PLAN = ["ตรวจสอบระดับและแนวอ้างอิงก่อนเริ่มงานติดตั้งเหล็กโครงสร้าง"];
+
+  function addLine(listId, value){
+    const list = g(listId); if(!list) return;
+    const row = document.createElement("div");
+    row.className = "line-row";
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.value = value || "";
+    inp.placeholder = "พิมพ์รายละเอียด…";
+    const del = document.createElement("button");
+    del.className = "btn ghost del"; del.textContent = "✕";
+    del.addEventListener("click", () => row.remove());
+    row.appendChild(inp); row.appendChild(del);
+    list.appendChild(row);
+    return inp;
+  }
+  function readLines(listId){
+    return Array.from(g(listId).querySelectorAll("input"))
+      .map(i => i.value.trim()).filter(Boolean);
+  }
+  function setLines(listId, arr){
+    g(listId).innerHTML = "";
+    (arr && arr.length ? arr : [""]).forEach(v => addLine(listId, v));
+  }
+
+  /* ---------- รูปภาพ ---------- */
+  function renderPhotos(){
+    const grid = g("rpPhotoGrid"); if(!grid) return;
+    grid.innerHTML = "";
+    state.photos.forEach((src, idx) => {
+      const cell = document.createElement("div");
+      cell.className = "photo-cell";
+      const img = document.createElement("img"); img.src = src;
+      const rm = document.createElement("button");
+      rm.className = "rm"; rm.textContent = "✕";
+      rm.addEventListener("click", () => { state.photos.splice(idx,1); renderPhotos(); });
+      cell.appendChild(img); cell.appendChild(rm);
+      grid.appendChild(cell);
+    });
+  }
+  function compressImage(file, maxDim){
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const im = new Image();
+        im.onload = () => {
+          let { width:w, height:h } = im;
+          const scale = Math.min(1, maxDim / Math.max(w, h));
+          w = Math.round(w*scale); h = Math.round(h*scale);
+          const cv = document.createElement("canvas");
+          cv.width = w; cv.height = h;
+          cv.getContext("2d").drawImage(im, 0, 0, w, h);
+          resolve(cv.toDataURL("image/jpeg", 0.82));
+        };
+        im.onerror = () => resolve(e.target.result);
+        im.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function handlePhotoFiles(files){
+    for(const f of files){
+      if(!f.type.startsWith("image/")) continue;
+      const dataUrl = await compressImage(f, 1280);
+      state.photos.push(dataUrl);
+    }
+    renderPhotos();
+  }
+
+  /* ---------- แบบก่อสร้าง (PDF/รูป) สำหรับให้ AI เทียบ ---------- */
+  function renderPlans(){
+    const grid = g("rpPlanGrid"); if(!grid) return;
+    grid.innerHTML = "";
+    state.planImages.forEach((src, idx) => {
+      const cell = document.createElement("div");
+      cell.className = "photo-cell";
+      const img = document.createElement("img"); img.src = src;
+      const rm = document.createElement("button");
+      rm.className = "rm"; rm.textContent = "✕";
+      rm.addEventListener("click", () => { state.planImages.splice(idx,1); renderPlans(); updatePlanStat(); });
+      cell.appendChild(img); cell.appendChild(rm);
+      grid.appendChild(cell);
+    });
+  }
+  function updatePlanStat(){
+    const el = g("rpPlanStat");
+    el.textContent = state.planImages.length ? ("แบบ " + state.planImages.length + " หน้า/รูป") : "";
+  }
+  let pdfjsLoading = null;
+  function loadPdfJs(){
+    if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if(pdfjsLoading) return pdfjsLoading;
+    pdfjsLoading = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      s.onload = () => {
+        try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }catch(e){}
+        resolve(window.pdfjsLib);
+      };
+      s.onerror = () => reject(new Error("โหลดตัวอ่าน PDF ไม่สำเร็จ (ต้องมีอินเทอร์เน็ต)"));
+      document.head.appendChild(s);
+    });
+    return pdfjsLoading;
+  }
+  async function pdfToImages(file, maxPages){
+    const lib = await loadPdfJs();
+    const buf = await file.arrayBuffer();
+    const pdf = await lib.getDocument({ data: buf }).promise;
+    const out = [];
+    const pages = Math.min(pdf.numPages, maxPages || 4);
+    for(let p = 1; p <= pages; p++){
+      const page = await pdf.getPage(p);
+      const vp = page.getViewport({ scale: 1.6 });
+      const cv = document.createElement("canvas");
+      cv.width = vp.width; cv.height = vp.height;
+      await page.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+      out.push(cv.toDataURL("image/jpeg", 0.85));
+    }
+    return out;
+  }
+  async function handlePlanFiles(files){
+    g("rpPlanStat").textContent = "⏳ กำลังประมวลผลแบบ…";
+    for(const f of files){
+      try{
+        if(f.type === "application/pdf"){
+          const imgs = await pdfToImages(f, 4);
+          state.planImages.push(...imgs);
+        } else if(f.type.startsWith("image/")){
+          state.planImages.push(await compressImage(f, 1600));
+        }
+      }catch(e){
+        toast(e.message || "อ่านไฟล์แบบไม่สำเร็จ", "error");
+      }
+    }
+    state.planImages = state.planImages.slice(0, 8);
+    renderPlans(); updatePlanStat();
+  }
+
+  /* ---------- สร้างรายงาน ---------- */
+  function collect(){
+    return {
+      project: g("rpProject").value.trim(),
+      location: g("rpLocation").value.trim(),
+      date: g("rpDate").value.trim(),
+      day: g("rpDay").value.trim(),
+      team: g("rpTeam").value.trim(),
+      percent: g("rpPercent").value.trim(),
+      phase: g("rpPhase").value.trim(),
+      progress: readLines("rpProgressList"),
+      issues: readLines("rpIssueList"),
+      plan: readLines("rpPlanList"),
+      status: g("rpStatus").value.trim(),
+      tags: g("rpTags").value.trim()
+    };
+  }
+  function buildReport(d){
+    const L = [];
+    L.push("📋 รายงานความก้าวหน้าหน้างาน (Executive Summary)");
+    if(d.project) L.push("โครงการ: " + d.project);
+    if(d.location) L.push("พิกัด: " + d.location);
+    const dateLine = [d.date ? "วันที่รายงาน: " + d.date : "", d.day ? "(Day " + d.day + ")" : ""].filter(Boolean).join(" ");
+    if(dateLine) L.push(dateLine);
+    const pp = [d.phase ? "ช่วงงาน: " + d.phase : "", (d.percent && +d.percent>0) ? "ความก้าวหน้าโดยรวม: " + d.percent + "%" : ""].filter(Boolean).join("  |  ");
+    if(pp) L.push(pp);
+    L.push("");
+    L.push("ความก้าวหน้าประจำวัน");
+    (d.progress.length?d.progress:["—"]).forEach(x => L.push("✅ " + x));
+    L.push("");
+    L.push("ปัญหา/อุปสรรค");
+    (d.issues.length?d.issues:["ไม่มี"]).forEach(x => L.push("⚠️ " + x));
+    L.push("");
+    L.push("แผนงานวันถัดไป");
+    (d.plan.length?d.plan:["—"]).forEach(x => L.push("🔹 " + x));
+    L.push("");
+    L.push("สถานะโครงการ");
+    L.push("📈 " + (d.status || "—"));
+    if(d.team){ L.push(""); L.push("ทีมงาน: " + d.team); }
+    if(d.tags){ L.push(""); L.push(d.tags); }
+    return L.join("\n");
+  }
+  function generateReport(){
+    const d = collect();
+    if(!d.project && !d.progress.length){ toast("กรอกข้อมูลโครงการ/ความก้าวหน้าก่อน","error"); return; }
+    state.lastReport = buildReport(d);
+    g("rpPreview").textContent = state.lastReport;
+    toast("📝 สร้างรายงานแล้ว");
+  }
+
+  /* ---------- AI วิเคราะห์ ---------- */
+  async function callAI(taskMode, btn){
+    const out = g("rpAIOut");
+    const d = collect();
+    const reportText = buildReport(d);
+    const spec = g("rpSpec").value.trim();
+    out.style.display = "block";
+    out.textContent = "⏳ กำลังให้ AI วิเคราะห์…";
+    const old = btn.textContent; btn.disabled = true; btn.textContent = "⏳ กำลังประมวลผล…";
+    try{
+      const base = (g("rpBackend") && g("rpBackend").value.trim()) || "";
+      const r = await fetch((base || "") + "/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: taskMode, reportText, spec, images: state.photos.slice(0, 6), planImages: state.planImages.slice(0, 4) })
+      });
+      const data = await r.json();
+      if(!r.ok){ out.textContent = "❌ " + (data.error || "เรียก AI ไม่สำเร็จ"); return; }
+      const text = (data.text || "").trim();
+      if(!text){ out.textContent = "❌ ไม่ได้รับผลลัพธ์จาก AI"; return; }
+      if(taskMode === "draft"){
+        g("rpStatus").value = text;
+        out.textContent = "✍️ ร่างสรุปสถานะแล้ว (ใส่ลงช่อง 'สถานะโครงการ' ให้อัตโนมัติ)\n\n" + text;
+        toast("✍️ AI ร่างสรุปให้แล้ว");
+      } else {
+        out.textContent = text;
+        toast("🤖 AI วิเคราะห์เสร็จ");
+      }
+    }catch(e){
+      out.textContent = "❌ เชื่อมต่อ AI ไม่สำเร็จ: " + (e.message || e) + "\n(ต้อง deploy บน Vercel ที่ตั้งค่า OPENAI_API_KEY แล้ว)";
+    }finally{
+      btn.disabled = false; btn.textContent = old;
+    }
+  }
+
+  /* ---------- บันทึก / ประวัติ ---------- */
+  function loadStore(){ try{ return JSON.parse(localStorage.getItem(REPORT_KEY) || "[]"); }catch(e){ return []; } }
+  function saveStore(arr){ localStorage.setItem(REPORT_KEY, JSON.stringify(arr)); }
+  function refreshHistory(){
+    const sel = g("rpHistory"); const arr = loadStore();
+    sel.innerHTML = "";
+    if(!arr.length){
+      g("rpHistStat").textContent = "ยังไม่มีรายงานบันทึกไว้";
+      const o = document.createElement("option"); o.textContent = "— ยังไม่มี —"; sel.appendChild(o);
+      return;
+    }
+    arr.forEach((it, i) => {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = (it.date || "?") + " · Day " + (it.day||"-") + " · " + (it.project || "ไม่ระบุชื่อ").slice(0,30);
+      sel.appendChild(o);
+    });
+    g("rpHistStat").textContent = "มีรายงานบันทึกไว้ " + arr.length + " รายการ";
+  }
+  function saveReport(){
+    const d = collect();
+    d.photos = state.photos.slice();
+    d.savedAt = Date.now();
+    const arr = loadStore();
+    arr.unshift(d);
+    saveStore(arr.slice(0, 100));
+    refreshHistory(); updateDashboard();
+    toast("💾 บันทึกรายงานแล้ว");
+  }
+  function loadReport(){
+    const arr = loadStore(); const i = parseInt(g("rpHistory").value, 10);
+    if(isNaN(i) || !arr[i]){ toast("เลือกรายงานก่อน","error"); return; }
+    const d = arr[i];
+    g("rpProject").value = d.project||""; g("rpLocation").value = d.location||"";
+    g("rpDate").value = d.date||""; g("rpDay").value = d.day||""; g("rpTeam").value = d.team||"";
+    g("rpPercent").value = d.percent||"0"; g("rpPhase").value = d.phase||"";
+    g("rpStatus").value = d.status||""; g("rpTags").value = d.tags||"";
+    setLines("rpProgressList", d.progress); setLines("rpIssueList", d.issues); setLines("rpPlanList", d.plan);
+    state.photos = (d.photos||[]).slice(); renderPhotos();
+    generateReport();
+    toast("📥 เรียกคืนรายงานแล้ว");
+  }
+  function deleteReport(){
+    const arr = loadStore(); const i = parseInt(g("rpHistory").value, 10);
+    if(isNaN(i) || !arr[i]){ toast("เลือกรายงานก่อน","error"); return; }
+    arr.splice(i,1); saveStore(arr); refreshHistory(); updateDashboard();
+    toast("🗑️ ลบแล้ว");
+  }
+
+  /* ---------- Dashboard ---------- */
+  function updateDashboard(){
+    const arr = loadStore().slice().sort((a,b)=>(a.savedAt||0)-(b.savedAt||0));
+    const reports = arr.length;
+    const days = new Set(arr.map(r => r.day || r.date).filter(Boolean)).size;
+    const issues = arr.reduce((s,r)=> s + ((r.issues&&r.issues.length)||0), 0);
+    const pts = arr.map(r => Math.max(0, Math.min(100, parseFloat(r.percent)||0)));
+    const latest = pts.length ? pts[pts.length-1] : 0;
+
+    g("kpiPercent").textContent = latest + "%";
+    g("kpiReports").textContent = reports;
+    g("kpiDays").textContent = days;
+    g("kpiIssues").textContent = issues;
+    g("kpiBar").style.width = latest + "%";
+
+    // วาด S-curve
+    const svg = g("rpCurve"); const W=600, H=160, pad=10;
+    if(pts.length < 1){ svg.innerHTML = ""; }
+    else {
+      const n = pts.length;
+      const x = i => n===1 ? W/2 : pad + (W-2*pad) * i/(n-1);
+      const y = v => H-pad - (H-2*pad) * v/100;
+      let d = "";
+      pts.forEach((v,i)=>{ d += (i?" L":"M") + x(i).toFixed(1) + " " + y(v).toFixed(1); });
+      const area = d + " L"+x(n-1).toFixed(1)+" "+(H-pad)+" L"+x(0).toFixed(1)+" "+(H-pad)+" Z";
+      const dots = pts.map((v,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.5" fill="#4a5cd6"/>`).join("");
+      const grid = [0,25,50,75,100].map(v=>`<line x1="${pad}" y1="${y(v)}" x2="${W-pad}" y2="${y(v)}" stroke="#e6e8f5" stroke-width="1"/><text x="2" y="${y(v)+3}" font-size="9" fill="#9aa">${v}</text>`).join("");
+      svg.innerHTML = grid +
+        `<path d="${area}" fill="rgba(108,124,240,.12)" stroke="none"/>` +
+        `<path d="${d}" fill="none" stroke="#4a5cd6" stroke-width="2.5"/>` + dots;
+    }
+    g("rpDashNote").textContent = reports
+      ? ("อัปเดตล่าสุด: ความก้าวหน้า " + latest + "% · บันทึกไว้ " + reports + " รายงาน")
+      : "ยังไม่มีข้อมูล — กรอกรายงานแล้วกด “💾 บันทึกรายงาน” เพื่อสะสมข้อมูลภาพรวม";
+  }
+
+  /* ---------- ส่งออก PDF (ผ่านหน้าต่างพิมพ์ของเบราว์เซอร์) ---------- */
+  function esc(s){ return String(s||"").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+  function exportPDF(){
+    const d = collect();
+    if(!state.lastReport) generateReport();
+    const photos = state.photos.map(src => `<img src="${src}">`).join("");
+    const reportHtml = esc(state.lastReport).replace(/\n/g, "<br>");
+    const aiOut = g("rpAIOut");
+    const aiHtml = (aiOut && aiOut.style.display !== "none" && aiOut.textContent.trim())
+      ? `<h2>🤖 ผลวิเคราะห์จาก AI</h2><div class="ai">${esc(aiOut.textContent).replace(/\n/g,"<br>")}</div>` : "";
+    const w = window.open("", "_blank");
+    if(!w){ toast("เบราว์เซอร์บล็อกหน้าต่าง — อนุญาต popup ก่อน","error"); return; }
+    w.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
+      <title>รายงานหน้างาน ${esc(d.date)}</title>
+      <style>
+        *{box-sizing:border-box}
+        body{font-family:'Sarabun','Noto Sans Thai',system-ui,sans-serif;color:#1a1a2e;margin:28px;line-height:1.65}
+        h1{font-size:20px;margin:0 0 2px;color:#2a2f6a}
+        .meta{color:#666;font-size:13px;margin-bottom:14px}
+        .pct{display:inline-block;background:#eef0fb;color:#2a2f6a;font-weight:700;border-radius:8px;padding:4px 12px;margin:6px 0}
+        .report{white-space:normal;font-size:14px;background:#f7f8fd;border:1px solid #e6e8f5;border-radius:10px;padding:14px}
+        h2{font-size:15px;margin:18px 0 6px;color:#2a2f6a}
+        .ai{font-size:13px;background:#fff;border:1px solid #e6e8f5;border-radius:10px;padding:12px}
+        .photos{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+        .photos img{width:100%;border-radius:8px;border:1px solid #ddd}
+        footer{margin-top:24px;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:8px}
+        @media print{ body{margin:14mm} .photos{grid-template-columns:repeat(2,1fr)} }
+      </style></head><body>
+      <h1>📋 รายงานความก้าวหน้าหน้างาน</h1>
+      <div class="meta">${esc(d.project||"")} ${d.location?("· "+esc(d.location)):""} ${d.date?("· "+esc(d.date)):""} ${d.day?("· Day "+esc(d.day)):""}</div>
+      ${(d.percent && +d.percent>0) ? `<div class="pct">ความก้าวหน้าโดยรวม ${esc(d.percent)}%${d.phase?(" · "+esc(d.phase)):""}</div>` : ""}
+      <div class="report">${reportHtml}</div>
+      ${photos ? `<h2>📷 รูปภาพหน้างาน</h2><div class="photos">${photos}</div>` : ""}
+      ${aiHtml}
+      <footer>สร้างจากระบบรายงานหน้างาน · ${new Date().toLocaleString("th-TH")}</footer>
+      <script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>
+      </body></html>`);
+    w.document.close();
+    toast("🖨️ เปิดหน้าพิมพ์ — เลือก “บันทึกเป็น PDF”");
+  }
+
+  /* ---------- บัญชี & ซิงค์คลาวด์ ---------- */
+  const TOKEN_KEY = "srToken", EMAIL_KEY = "srEmail";
+  function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+  function refreshAuthUI(){
+    const t = token();
+    g("rpLoggedOut").style.display = t ? "none" : "block";
+    g("rpLoggedIn").style.display = t ? "block" : "none";
+    if(t) g("rpAccountStat").textContent = "เข้าสู่ระบบแล้ว: " + (localStorage.getItem(EMAIL_KEY) || "");
+  }
+  async function authRequest(pathName){
+    const email = g("rpEmail").value.trim(), password = g("rpPass").value;
+    if(!email || !password){ toast("กรอกอีเมลและรหัสผ่าน","error"); return; }
+    try{
+      const r = await fetch("/api/auth/" + pathName, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await r.json();
+      if(!r.ok){ toast(data.error || "ไม่สำเร็จ","error"); return; }
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(EMAIL_KEY, data.email);
+      g("rpPass").value = "";
+      refreshAuthUI();
+      toast("✅ " + (pathName === "register" ? "สมัครและเข้าสู่ระบบแล้ว" : "เข้าสู่ระบบแล้ว"));
+    }catch(e){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (ต้องเปิดผ่าน backend)","error"); }
+  }
+  function logout(){ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(EMAIL_KEY); refreshAuthUI(); toast("ออกจากระบบแล้ว"); }
+  async function syncUp(){
+    if(!token()) return;
+    try{
+      const r = await fetch("/api/reports", {
+        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token() },
+        body: JSON.stringify({ reports: loadStore() })
+      });
+      const data = await r.json();
+      if(!r.ok){ toast(data.error || "อัปไม่สำเร็จ","error"); return; }
+      toast("⬆️ อัปขึ้นคลาวด์แล้ว " + (data.count||0) + " รายงาน");
+    }catch(e){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้","error"); }
+  }
+  async function syncDown(){
+    if(!token()) return;
+    try{
+      const r = await fetch("/api/reports", { headers: { "Authorization": "Bearer " + token() } });
+      const data = await r.json();
+      if(!r.ok){ toast(data.error || "ดึงไม่สำเร็จ","error"); return; }
+      if(Array.isArray(data)){ saveStore(data); refreshHistory(); updateDashboard(); toast("⬇️ ดึงจากคลาวด์แล้ว " + data.length + " รายงาน"); }
+    }catch(e){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้","error"); }
+  }
+
+  let inited = false;
+  function init(){
+    if(inited) return; inited = true;
+    // เติมค่าเริ่มต้น
+    setLines("rpProgressList", DEFAULT_PROGRESS);
+    setLines("rpIssueList", DEFAULT_ISSUE);
+    setLines("rpPlanList", DEFAULT_PLAN);
+    const today = new Date();
+    const be = today.getFullYear() + 543;
+    g("rpDate").value = String(today.getDate()).padStart(2,"0") + "/" + String(today.getMonth()+1).padStart(2,"0") + "/" + be;
+    g("rpTags").placeholder = "#รายงานหน้างาน #งานโครงสร้าง";
+
+    g("rpAddProgress").addEventListener("click", () => addLine("rpProgressList").focus());
+    g("rpAddIssue").addEventListener("click", () => addLine("rpIssueList").focus());
+    g("rpAddPlan").addEventListener("click", () => addLine("rpPlanList").focus());
+
+    g("rpAddPhoto").addEventListener("click", () => g("rpPhotos").click());
+    g("rpPhotos").addEventListener("change", e => { handlePhotoFiles(Array.from(e.target.files)); e.target.value=""; });
+
+    g("rpAddPlan2").addEventListener("click", () => g("rpPlanFile").click());
+    g("rpPlanFile").addEventListener("change", e => { handlePlanFiles(Array.from(e.target.files)); e.target.value=""; });
+
+    g("rpGenerate").addEventListener("click", generateReport);
+    g("rpCopy").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } copyToClipboard(state.lastReport); });
+    g("rpDownload").addEventListener("click", () => { if(!state.lastReport){ generateReport(); } downloadText("รายงานหน้างาน_" + (g("rpDate").value||"").replace(/\//g,"-") + ".txt", state.lastReport); });
+    g("rpPDF").addEventListener("click", exportPDF);
+    g("rpSave").addEventListener("click", saveReport);
+
+    g("rpAIDraft").addEventListener("click", e => callAI("draft", e.currentTarget));
+    g("rpAIInspect").addEventListener("click", e => callAI("inspect", e.currentTarget));
+    g("rpAIPlan").addEventListener("click", e => callAI("plan", e.currentTarget));
+
+    g("rpLoad").addEventListener("click", loadReport);
+    g("rpDelete").addEventListener("click", deleteReport);
+
+    g("rpLogin").addEventListener("click", () => authRequest("login"));
+    g("rpRegister").addEventListener("click", () => authRequest("register"));
+    g("rpLogout").addEventListener("click", logout);
+    g("rpSyncUp").addEventListener("click", syncUp);
+    g("rpSyncDown").addEventListener("click", syncDown);
+    refreshAuthUI();
+
+    refreshHistory();
+    updateDashboard();
+  }
+  window.__initReportMode = init;
+})();
+
+</script>
+
+<!-- ===== Theme toggle (2026) ===== -->
+<script>
+(function(){
+  var root = document.documentElement, btn = document.getElementById("themeToggle");
+  function current(){ return root.getAttribute("data-theme") === "dark" ? "dark" : "light"; }
+  function apply(t){
+    root.setAttribute("data-theme", t);
+    try{ localStorage.setItem("ui-theme", t); }catch(e){}
+    if(btn) btn.textContent = t === "dark" ? "☀️" : "🌙";
+  }
+  if(btn){
+    btn.textContent = current() === "dark" ? "☀️" : "🌙";
+    btn.addEventListener("click", function(){ apply(current() === "dark" ? "light" : "dark"); });
+  }
+})();
 </script>
 </body>
 </html>

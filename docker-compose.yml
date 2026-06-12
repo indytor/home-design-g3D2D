@@ -1,0 +1,23 @@
+services:
+  site-report:
+    build: .
+    container_name: site-report
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DATA_DIR=/data
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - site-report-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  site-report-data:
