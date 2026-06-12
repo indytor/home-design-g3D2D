@@ -1,5 +1,7 @@
 # AI Architectural Prompt Generator — เชื่อม OpenAI สร้างภาพ
 
+> 🚀 **เริ่มใช้งาน:** วิธีรัน Local → Docker Desktop → Cloud ดูที่ **[QUICKSTART.md](QUICKSTART.md)**
+
 โครงสร้างไฟล์
 - `index.html` — โปรแกรมหลัก (หน้าเว็บ) — มีโหมด: ออกแบบ/สร้างภาพ, ประมาณราคา BOQ, **รายงานหน้างาน**, บันทึกงาน, วิธีใช้
 - `api/generate-image.js` — backend สร้างภาพ ซ่อน API key (Vercel Serverless Function)
